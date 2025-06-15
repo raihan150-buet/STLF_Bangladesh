@@ -21,13 +21,7 @@ def get_model(model_type, config):
             dropout=config['dropout']
         )
     elif model_type == "tcn":
-        return TCNModel(
-            input_size=config['input_size'],
-            output_size=config['forecast_horizon'],
-            num_channels=[config['hidden_size']] * config['num_layers'], # Example channel setup
-            kernel_size=3, # Example kernel size, should be in config
-            dropout=config['dropout']
-        )
+        return TCNModel(config)
     # elif model_type == "transformer":
     #     return TransformerModel(...)
     elif model_type == "qenhancedlstm":
