@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
-from .base_model import BaseModel
+# NOTE: You will need to provide the code for base_model.py
+# Assuming it's defined like `class BaseModel(nn.Module): def __init__(self, config): ...`
+from .base_model import BaseModel 
 
 class Chomp1d(nn.Module):
     """A helper module to remove padding from the end of a sequence."""
@@ -62,7 +64,9 @@ class TemporalConvNet(nn.Module):
 class TCNModel(BaseModel):
     """The main TCN model class that wraps the TemporalConvNet."""
     def __init__(self, config):
-        super(TCNModel, self).__init__()
+        # CORRECTED LINE: Pass the 'config' to the parent BaseModel's __init__ method
+        super(TCNModel, self).__init__(config)
+        
         # Unpack the config dictionary to build the TCN
         self.tcn = TemporalConvNet(
             num_inputs=config["input_size"],
@@ -73,12 +77,7 @@ class TCNModel(BaseModel):
         self.linear = nn.Linear(config["hidden_size"], config["forecast_horizon"])
 
     def forward(self, x):
-        # TCN expects input of shape (batch_size, num_features, sequence_length)
         x_permuted = x.permute(0, 2, 1)
         tcn_out = self.tcn(x_permuted)
-        
-        # We take the output of the very last time step from the TCN
         last_time_step_out = tcn_out[:, :, -1]
-        
-        # Pass it through the final fully connected layer
         return self.linear(last_time_step_out)
