@@ -1,0 +1,35 @@
+# Base configuration
+project: "demand_forecasting"
+experiment_name: "base_experiment"
+
+# Data configuration
+# data_path, checkpoint_path, and saved_model_path are provided at runtime via command-line arguments.
+target_column: "Demand(MW)"
+forecasting_type: "univariate"  # or "multivariate"
+features: []  # Will be populated in mode-specific configs
+sequence_length: 24  # 24 hours
+forecast_horizon: 1   # Predict next hour
+test_size: 0.2
+val_size: 0.1
+random_state: 42
+
+# Model configuration
+model_type: "TCN"  # Options: LSTM, Transformer, TCN
+input_size: 1      # Will be auto-set based on features
+hidden_size: 64
+num_layers: 2
+dropout: 0.2
+
+# Training configuration
+batch_size: 64
+learning_rate: 0.001
+num_epochs: 50
+patience: 10   # For early stopping
+
+# Checkpointing
+checkpoint_freq: 5
+
+# W&B configuration
+use_wandb: True
+wandb_project: "demand_forecasting"
+wandb_entity: null # This will default to your W&B username

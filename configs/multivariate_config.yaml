@@ -1,0 +1,10 @@
+# Inherits from base config
+# To use this, you would need to implement a tool that handles config inheritance
+# or manually merge it with the base config before passing it to the script.
+# For simplicity in this workflow, you can create a full standalone config for multivariate.
+# If you have a config loader that handles `_base_`, this file is correct.
+
+# Multivariate specific
+forecasting_type: "multivariate"
+features: ["Generation(MW)", "Loadshed"]  # Additional features
+model_type: "LSTM" # Example: default to LSTM for multivariate

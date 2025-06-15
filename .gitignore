@@ -1,0 +1,24 @@
+# Data files and directories
+*.csv
+*.xlsx
+data/
+
+# Model checkpoints and saved models
+checkpoints/
+saved_models/
+
+# Experiment tracking logs (Weights & Biases)
+wandb/
+
+# Python cache and environment files
+__pycache__/
+*.pyc
+.env
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
