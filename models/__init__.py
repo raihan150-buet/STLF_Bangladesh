@@ -6,6 +6,7 @@ from .tcn import TCNModel
 from .q_e_lstm import QEnhancedLSTMModel
 from .base_model import BaseModel
 from .transformer import TransformerModel
+from .cnn_lstm import CNN_LSTM_Model
 
 
 def get_model(model_type, config):
@@ -25,6 +26,8 @@ def get_model(model_type, config):
         return QEnhancedLSTMModel(config)
     elif model_type == "transformer":
         return TransformerModel(config)
+    elif model_type == "cnn_lstm":
+        return CNN_LSTM_Model(config)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
