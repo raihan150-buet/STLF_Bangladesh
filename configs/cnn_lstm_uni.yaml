@@ -6,8 +6,8 @@ experiment_name: "CNN_LSTM_univariate_experiment"
 target_column: "Demand(MW)"
 forecasting_type: "univariate"
 features: []
-sequence_length: 168
-forecast_horizon: 24
+sequence_length: 24
+forecast_horizon: 1
 test_size: 0.2
 val_size: 0.2
 random_state: 42
@@ -28,13 +28,13 @@ input_size: 1           # Auto-set by preprocessing
 dropout: 0.2
 
 # --- Training Configuration ---
-batch_size: 32
-learning_rate: 0.0005
+batch_size: 64
+learning_rate: 0.001
 num_epochs: 50
 patience: 10
 checkpoint_freq: 5
 
 # --- W&B Configuration ---
 use_wandb: True
-wandb_project: "demand_forecasting"
+wandb_project: "demand_forecasting_hourly"
 wandb_entity: null
