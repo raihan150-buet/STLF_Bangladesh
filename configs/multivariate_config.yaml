@@ -15,7 +15,7 @@ val_size: 0.2
 random_state: 42
 
 # Model configuration
-model_type: "LSTM"
+model_type: "Transformer"
 input_size: 1
 hidden_size: 64
 num_layers: 2
