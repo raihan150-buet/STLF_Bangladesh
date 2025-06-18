@@ -8,14 +8,14 @@ experiment_name: "univariate_TCN_experiment"
 target_column: "Demand(MW)"
 forecasting_type: "univariate"
 features: []
-sequence_length: 168
-forecast_horizon: 24
+sequence_length: 24
+forecast_horizon: 1
 test_size: 0.2
 val_size: 0.2
 random_state: 42
 
 # Model configuration
-model_type: "TCN"
+model_type: "LSTM"
 input_size: 1
 hidden_size: 64
 num_layers: 2
@@ -32,5 +32,5 @@ checkpoint_freq: 5
 
 # W&B configuration
 use_wandb: True
-wandb_project: "demand_forecasting"
+wandb_project: "demand_forecasting_multivariate"
 wandb_entity: null

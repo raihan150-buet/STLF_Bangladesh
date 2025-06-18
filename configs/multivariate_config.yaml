@@ -1,10 +1,36 @@
-# Inherits from base config
-# To use this, you would need to implement a tool that handles config inheritance
-# or manually merge it with the base config before passing it to the script.
-# For simplicity in this workflow, you can create a full standalone config for multivariate.
-# If you have a config loader that handles `_base_`, this file is correct.
+# This is a standalone version for simplicity, inheriting the structure of base_config.
+# Univariate specific settings are defined.
 
-# Multivariate specific
+project: "demand_forecasting"
+experiment_name: "univariate_TCN_experiment"
+
+# Data configuration
+target_column: "Demand(MW)"
 forecasting_type: "multivariate"
-features: ["Generation(MW)", "Loadshed"]  # Additional features
-model_type: "LSTM" # Example: default to LSTM for multivariate
+features: ['Month', 'Day', 'Hour_of_day', 'Temperature', 'Humidity', 'Heat_Index_C']
+sequence_length: 24
+forecast_horizon: 1
+test_size: 0.2
+val_size: 0.2
+random_state: 42
+
+# Model configuration
+model_type: "LSTM"
+input_size: 1
+hidden_size: 64
+num_layers: 2
+dropout: 0.2
+
+# Training configuration
+batch_size: 32
+learning_rate: 0.001
+num_epochs: 50
+patience: 10
+
+# Checkpointing
+checkpoint_freq: 5
+
+# W&B configuration
+use_wandb: True
+wandb_project: "demand_forecasting_multivariate"
+wandb_entity: null

@@ -3,8 +3,8 @@
 
 from .lstm import LSTMModel
 from .tcn import TCNModel
-# from .transformer import TransformerModel # Uncomment when implemented
 from .q_e_lstm import QEnhancedLSTMModel
+from .base_model import BaseModel
 
 def get_model(model_type, config):
     """
@@ -12,21 +12,15 @@ def get_model(model_type, config):
     """
     model_type = model_type.lower()
     
+    # CORRECTED: All models that are defined to take a 'config' object
+    # should be called the same way for consistency.
+    
     if model_type == "lstm":
-        return LSTMModel(
-            input_size=config['input_size'],
-            hidden_size=config['hidden_size'],
-            num_layers=config['num_layers'],
-            output_size=config['forecast_horizon'],
-            dropout=config['dropout']
-        )
+        return LSTMModel(config)
     elif model_type == "tcn":
         return TCNModel(config)
-    # elif model_type == "transformer":
-    #     return TransformerModel(...)
     elif model_type == "qenhancedlstm":
-        return QEnhancedLSTMModel(config) # Pass the whole config for complex models
-        
+        return QEnhancedLSTMModel(config)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
