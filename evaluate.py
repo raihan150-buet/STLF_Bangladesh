@@ -4,7 +4,6 @@ import pandas as pd
 import yaml
 import wandb
 import os
-from datetime import datetime
 import matplotlib.pyplot as plt
 import argparse
 
@@ -16,13 +15,13 @@ from torch.utils.data import DataLoader
 from models import get_model
 
 def evaluate(config_path, model_checkpoint_path, data_path):
-    """Evaluates a trained model on the test set."""
+    """Evaluates a trained model on the test set using the new preprocessing logic."""
     # Load config and inject data path
     with open(config_path, 'r') as f:
         eval_config = yaml.safe_load(f)
     eval_config['data_path'] = data_path
 
-    # Initialize W&B for evaluation (optional)
+    # Initialize W&B for evaluation
     if eval_config.get("use_wandb", True):
         run_name = f"eval_{eval_config.get('model_type', 'model')}_{os.path.basename(model_checkpoint_path)}"
         wandb.init(
@@ -34,10 +33,10 @@ def evaluate(config_path, model_checkpoint_path, data_path):
         )
         print(f"W&B Run for evaluation: {wandb.run.name}")
 
-    # Load data, but only need test set and scaler
+    # Load data using the enhanced preprocessing function
+    # It now returns separate scalers for features and target.
     data_info = load_and_preprocess_data(eval_config)
-    scaler = data_info["scaler"]
-    scaler_feature_names = data_info["feature_names"]
+    target_scaler = data_info["target_scaler"]
     
     test_loader = DataLoader(
         TimeSeriesDataset(data_info["X_test"], data_info["y_test"]),
@@ -59,30 +58,20 @@ def evaluate(config_path, model_checkpoint_path, data_path):
     # Get predictions
     all_preds_scaled, all_actuals_scaled = [], []
     with torch.no_grad():
-        for X_batch, y_batch in test_loader:
+        for X_batch, y_batch_scaled in test_loader:
             X_batch = X_batch.to(device).float()
-            y_batch = y_batch.to(device).float()
             
-            preds = model(X_batch)
-            all_preds_scaled.append(preds.cpu().numpy())
-            all_actuals_scaled.append(y_batch.cpu().numpy())
+            preds_scaled = model(X_batch)
+            all_preds_scaled.append(preds_scaled.cpu().numpy())
+            all_actuals_scaled.append(y_batch_scaled.cpu().numpy())
 
     final_preds_scaled = np.concatenate(all_preds_scaled)
     final_actuals_scaled = np.concatenate(all_actuals_scaled)
 
-    # Inverse transform to get original scale
-    num_scaler_features = scaler.n_features_in_
-    target_idx = scaler_feature_names.index(eval_config["target_column"])
-
-    def inverse_transform(data, scaler, target_idx, num_features):
-        data_reshaped = data.reshape(-1, 1)
-        dummy_array = np.zeros((data_reshaped.shape[0], num_features))
-        dummy_array[:, target_idx] = data_reshaped[:, 0]
-        unscaled_array = scaler.inverse_transform(dummy_array)
-        return unscaled_array[:, target_idx].reshape(data.shape)
-
-    final_preds_unscaled = inverse_transform(final_preds_scaled, scaler, target_idx, num_scaler_features)
-    final_actuals_unscaled = inverse_transform(final_actuals_scaled, scaler, target_idx, num_scaler_features)
+    # --- UPDATED INVERSE TRANSFORM ---
+    # Use the dedicated target_scaler for a much cleaner inverse transform.
+    final_preds_unscaled = target_scaler.inverse_transform(final_preds_scaled)
+    final_actuals_unscaled = target_scaler.inverse_transform(final_actuals_scaled)
     
     # Calculate and print metrics
     metrics = calculate_metrics(final_actuals_unscaled, final_preds_unscaled)
@@ -93,7 +82,7 @@ def evaluate(config_path, model_checkpoint_path, data_path):
         wandb.log(metrics)
         
         # Create and log prediction plot
-        fig = plt.figure(figsize=(15, 6))
+        fig = plt.figure(figsize=(15, 8)) # Adjusted size for better viewing
         plot_predictions(
             final_actuals_unscaled, 
             final_preds_unscaled, 
