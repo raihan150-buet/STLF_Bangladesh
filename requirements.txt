@@ -3,6 +3,7 @@ numpy
 pandas
 scikit-learn
 matplotlib
+openpyxl
 PyYAML
 wandb
 pennylane

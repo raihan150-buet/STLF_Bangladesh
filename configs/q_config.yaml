@@ -30,7 +30,7 @@ dropout: 0.1
 # --- Training Configuration ---
 batch_size: 8   # Quantum simulations are slow, so smaller batches are recommended
 learning_rate: 0.01 # Quantum models often benefit from larger learning rates
-num_epochs: 30
+num_epochs: 20
 patience: 10
 checkpoint_freq: 5
 
