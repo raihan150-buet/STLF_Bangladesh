@@ -42,3 +42,8 @@ val_size: 0.2
 
 # Checkpointing
 checkpoint_freq: 5
+
+scheduler_config:
+  use_scheduler: True   # Set to True to enable the scheduler
+  patience: 3           # Reduce LR if val_loss doesn't improve for 3 epochs
+  factor: 0.5           # When reducing, new_lr = old_lr * 0.5
