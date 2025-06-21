@@ -93,7 +93,16 @@ def train(config_source, data_path, checkpoint_path, saved_model_path, resume_ch
         print("Running without W&B logging.")
 
     data = load_and_preprocess_data(dict(active_config))
-    active_config['input_size'] = data['X_train'].shape[2]
+    
+    # --- CORRECTED BLOCK ---
+    # This block now correctly updates the W&B config after preprocessing.
+    new_input_size = data['X_train'].shape[2]
+    if active_config.get("input_size") != new_input_size:
+        print(f"Updating config 'input_size' from {active_config.get('input_size')} to {new_input_size}.")
+        if wandb.run: # Check if a wandb run is active
+            active_config.update({"input_size": new_input_size}, allow_val_change=True)
+        else:
+            active_config["input_size"] = new_input_size
     
     train_loader = DataLoader(TimeSeriesDataset(data["X_train"], data["y_train"]), batch_size=active_config.get("batch_size", 64), shuffle=True)
     val_loader = DataLoader(TimeSeriesDataset(data["X_val"], data["y_val"]), batch_size=active_config.get("batch_size", 64), shuffle=False)
@@ -110,7 +119,6 @@ def train(config_source, data_path, checkpoint_path, saved_model_path, resume_ch
         optimizer = optim.Adam(model.parameters(), lr=active_config.get("learning_rate", 0.001))
         scheduler_config = active_config.get('scheduler_config', {'use_scheduler': False})
         if scheduler_config.get('use_scheduler'):
-            # CORRECTED: Removed the 'verbose' argument
             scheduler = ReduceLROnPlateau(
                 optimizer,
                 mode=scheduler_config.get('mode', 'min'),
@@ -151,7 +159,8 @@ def train(config_source, data_path, checkpoint_path, saved_model_path, resume_ch
         if wandb.run:
             wandb.log({"epoch": epoch + 1, "val_loss": epoch_val_loss, "learning_rate": current_lr})
 
-        if epoch_val_loss < best_val_loss:
+        is_best = epoch_val_loss < best_val_loss
+        if is_best:
             best_val_loss = epoch_val_loss
             epochs_no_improve = 0
             save_checkpoint(epoch, model, optimizer, scheduler, active_config, best_val_loss, epochs_no_improve, is_best=True, current_run_id=current_wandb_run_id)
