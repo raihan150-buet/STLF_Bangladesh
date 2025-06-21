@@ -15,6 +15,22 @@ __pycache__/
 *.pyc
 .env
 *~
+venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+.ipynb
+# Temporary files
+*.tmp
+# Backup files  
+*.bak
+# IDE and editor specific files
+.vscode/
+.idea/
+# Temporary files created by editors
+*.swp
+# Temporary files created by Python
+*.tmp   
 
 # OS-specific files
 .DS_Store

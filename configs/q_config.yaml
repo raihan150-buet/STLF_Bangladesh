@@ -1,44 +1,40 @@
-# W&B Configuration
-use_wandb: true
-wandb_project: "demand_forecasting_quantum" 
-wandb_entity: null
+# Configuration for the Quantum-Enhanced LSTM Model
+project: "demand_forecasting"
+experiment_name: "QEnhancedLSTM_experiment"
 
-# Data Configuration
-# data_path, checkpoint_path, and saved_model_path are provided via command-line arguments at runtime.
-forecasting_type: "univariate"
+# --- Data Configuration ---
 target_column: "Demand(MW)"
+forecasting_type: "univariate" # Or multivariate
 features: [] 
+sequence_length: 24
+forecast_horizon: 1
+test_size: 0.2
+val_size: 0.2
+random_state: 42
 
-# Model Configuration
-model_type: "QEnhancedLSTM" 
+# --- Model Configuration ---
+model_type: "QEnhancedLSTM"
 
-# --- Parameters for QEnhancedLSTMModel ---
-classical_lstm_hidden_size: 64 
-num_classical_lstm_layers: 1 
-dropout: 0.1     
-hidden_size: 64
+# Classical Part Parameters
+classical_lstm_hidden_size: 4  # IMPORTANT: For this simple model, this should match n_qubits
+num_classical_lstm_layers: 1   # Number of LSTM layers
 
-# Quantum Enhancement part
-n_qubits_qelstm: 4
-n_pqc_layers_qelstm: 2
-ansatz_type_qelstm: "StronglyEntanglingLayers"
+# Quantum Part Parameters
+n_qubits: 4                    # Number of qubits in the quantum circuit
+n_quantum_layers: 2            # Number of trainable layers in the VQC
 
-# FC layers after concatenation in QEnhancedLSTM
-qelstm_fc_hidden1_dim: 48
-qelstm_fc_hidden2_dim: 0
-qelstm_fc_dropout: 0.1
+# Common Parameters
+input_size: 1                  # Auto-set by preprocessing
+dropout: 0.1
 
-# --- General Training Parameters ---
-input_size: 1 
-sequence_length: 168 
-forecast_horizon: 24 
-batch_size: 32 
-learning_rate: 0.001
-num_epochs: 20
-patience: 10 
-random_state: 42 
-test_size: 0.2 
-val_size: 0.2 
-
-# Checkpointing
+# --- Training Configuration ---
+batch_size: 8   # Quantum simulations are slow, so smaller batches are recommended
+learning_rate: 0.01 # Quantum models often benefit from larger learning rates
+num_epochs: 30
+patience: 10
 checkpoint_freq: 5
+
+# --- W&B Configuration ---
+use_wandb: True
+wandb_project: "demand_forecasting_quantum"
+wandb_entity: null

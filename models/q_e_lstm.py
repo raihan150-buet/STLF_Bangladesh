@@ -1,139 +1,126 @@
-# models/q_e_lstm.py
 import torch
 import torch.nn as nn
-import pennylane as qml # Import PennyLane here
+import pennylane as qml
+from pennylane import numpy as np # Use PennyLane's wrapped numpy
 from .base_model import BaseModel
 
-# --- Definition of QuantumLayer (moved here) ---
-class QuantumLayer(nn.Module):
-    def __init__(self, n_input_features_for_q_layer, n_qubits, n_pqc_layers, 
-                 output_dim=None, q_device_name="default.qubit", 
-                 diff_method="backprop",
-                 ansatz_type="StronglyEntanglingLayers"):
-        super().__init__()
-        self.n_qubits = n_qubits
-        self.n_pqc_layers = n_pqc_layers 
-        self.q_output_dim = output_dim if output_dim is not None else self.n_qubits
-        self.dev = qml.device(q_device_name, wires=self.n_qubits)
-        self.ansatz_type = ansatz_type
-        self.n_features_for_embedding = n_qubits 
-        self.diff_method_for_qnode = diff_method
+# --- Define the Quantum Part of the Model ---
+# This section creates the Variational Quantum Circuit (VQC)
 
-        if n_input_features_for_q_layer < self.n_features_for_embedding:
-            print(f"Warning: QuantumLayer received n_input_features_for_q_layer ({n_input_features_for_q_layer}) "
-                  f"< n_features_for_embedding ({self.n_features_for_embedding}).")
-        elif n_input_features_for_q_layer > self.n_features_for_embedding:
-             print(f"Warning: QuantumLayer received n_input_features_for_q_layer ({n_input_features_for_q_layer}) "
-                  f"> n_features_for_embedding ({self.n_features_for_embedding}). "
-                  "AngleEmbedding will use the first n_features_for_embedding features.")
+# 1. Define the quantum device. We use 'default.qubit', a simulator.
+#    The number of qubits is a hyperparameter we will get from the config.
+n_qubits = 4 # Default, will be overridden by config
+dev = qml.device("default.qubit", wires=n_qubits)
 
-        @qml.qnode(self.dev, interface="torch", diff_method=diff_method)
-        def _quantum_circuit(inputs, weights):
-            qml.AngleEmbedding(inputs, wires=range(self.n_features_for_embedding), rotation='Y')
+# 2. Define the Quantum Node (The Circuit Itself)
+#    This is where the quantum computation happens.
+@qml.qnode(dev, interface="torch")
+def quantum_circuit(inputs, weights):
+    """
+    The Variational Quantum Circuit (VQC).
+    - 'inputs' are the classical features from the LSTM.
+    - 'weights' are the trainable parameters of the quantum circuit.
+    """
+    # a. Encoding Layer: Embed the classical data into the quantum state.
+    #    We use AngleEmbedding, which maps each classical feature to a qubit's rotation angle.
+    qml.AngleEmbedding(inputs, wires=range(n_qubits))
 
-            if self.ansatz_type == "StronglyEntanglingLayers":
-                qml.StronglyEntanglingLayers(weights=weights, wires=range(self.n_qubits))
-            elif self.ansatz_type == "BasicEntanglerLayers":
-                 qml.BasicEntanglerLayers(weights=weights, wires=range(self.n_qubits), rotation=qml.RY)
-            else: 
-                for layer_idx in range(self.n_pqc_layers):
-                    for i in range(self.n_qubits):
-                        qml.Rot(weights[layer_idx, i, 0],
-                                weights[layer_idx, i, 1],
-                                weights[layer_idx, i, 2], wires=i)
-                    for i in range(self.n_qubits - 1):
-                        qml.CNOT(wires=[i, i + 1])
-                    if self.n_qubits > 1 and self.n_pqc_layers > 0:
-                        qml.CNOT(wires=[self.n_qubits - 1, 0])
-            
-            return [qml.expval(qml.PauliZ(i)) for i in range(self.q_output_dim)]
+    # b. Variational/Training Layer: This is the part of the circuit that "learns".
+    #    We use a standard structure of alternating rotation and entanglement layers.
+    #    This is similar to a "StronglyEntanglingLayers" ansatz mentioned in many papers.
+    qml.StronglyEntanglingLayers(weights, wires=range(n_qubits))
 
-        if self.ansatz_type == "StronglyEntanglingLayers":
-            weight_shapes = {"weights": (self.n_pqc_layers, self.n_qubits, 3)}
-        elif self.ansatz_type == "BasicEntanglerLayers":
-            weight_shapes = {"weights": (self.n_pqc_layers, self.n_qubits)}
-        else: 
-            weight_shapes = {"weights": (self.n_pqc_layers, self.n_qubits, 3)}
-            
-        self.qnn_layer = qml.qnn.TorchLayer(_quantum_circuit, weight_shapes)
+    # c. Measurement: We measure the expectation value of the Pauli-Z operator for each qubit.
+    #    This extracts the classical information back out of the circuit.
+    return [qml.expval(qml.PauliZ(i)) for i in range(n_qubits)]
 
-    def forward(self, classical_inputs):
-        if classical_inputs.shape[-1] < self.n_features_for_embedding:
-            raise ValueError(f"QuantumLayer expects at least {self.n_features_for_embedding} input features, "
-                             f"got {classical_inputs.shape[-1]}.")
-        
-        inputs_for_qml = classical_inputs[:, :self.n_features_for_embedding]
-        return self.qnn_layer(inputs_for_qml)
-# --- End of QuantumLayer Definition ---
-
-
-class QEnhancedLSTMModel(BaseModel): # Your QEnhancedLSTMModel definition remains the same
+class QEnhancedLSTMModel(BaseModel):
+    """
+    A Hybrid Quantum-Classical LSTM Model.
+    It uses a classical LSTM to learn temporal patterns and a quantum circuit
+    to enhance feature representation.
+    """
     def __init__(self, config):
-        super().__init__(config)
+        super(QEnhancedLSTMModel, self).__init__(config)
         
-        self.input_size = config["input_size"]
-        self.classical_lstm_hidden_size = config.get("classical_lstm_hidden_size", config.get("hidden_size", 64))
-        self.num_classical_lstm_layers = config.get("num_classical_lstm_layers", config.get("num_layers", 1))
-        self.classical_dropout = config.get("dropout", 0.1) if self.num_classical_lstm_layers > 1 else 0
+        # --- Unpack Hyperparameters from Config ---
+        # Classical part
+        self.input_size = self.config['input_size']
+        self.lstm_hidden_size = self.config['classical_lstm_hidden_size']
+        self.lstm_num_layers = self.config['num_classical_lstm_layers']
         
-        self.forecast_horizon = config["forecast_horizon"]
+        # Quantum part
+        # Update the global n_qubits variable for the circuit definition
+        global n_qubits
+        n_qubits = self.config['n_qubits']
+        self.n_qubits = n_qubits
+        n_quantum_layers = self.config['n_quantum_layers']
+        
+        # Other parameters
+        dropout = self.config['dropout']
+        output_size = self.config['forecast_horizon']
 
-        self.n_qubits_qelstm = config.get("n_qubits_qelstm", 4) 
-        self.n_pqc_layers_qelstm = config.get("n_pqc_layers_qelstm", 2) 
-        self.ansatz_type_qelstm = config.get("ansatz_type_qelstm", "StronglyEntanglingLayers")
-
-        self.lstm_layer = nn.LSTM(
-            input_size=self.input_size,
-            hidden_size=self.classical_lstm_hidden_size,
-            num_layers=self.num_classical_lstm_layers,
-            dropout=self.classical_dropout,
-            batch_first=True
+        # --- Define Model Layers ---
+        # 1. Classical LSTM Layer
+        self.lstm = nn.LSTM(
+            self.input_size, 
+            self.lstm_hidden_size,
+            num_layers=self.lstm_num_layers,
+            batch_first=True,
+            dropout=dropout if self.lstm_num_layers > 1 else 0
         )
-        
-        if self.classical_lstm_hidden_size < self.n_qubits_qelstm:
-            raise ValueError(
-                f"Classical LSTM hidden size ({self.classical_lstm_hidden_size}) "
-                f"must be >= n_qubits_qelstm ({self.n_qubits_qelstm}) for slicing."
-            )
 
-        self.quantum_enhancer = QuantumLayer( # Uses the QuantumLayer defined above in this file
-            n_input_features_for_q_layer=self.n_qubits_qelstm,
-            n_qubits=self.n_qubits_qelstm,
-            n_pqc_layers=self.n_pqc_layers_qelstm,
-            output_dim=self.n_qubits_qelstm,
-            ansatz_type=self.ansatz_type_qelstm
-        )
+        # 2. Quantum Layer
+        # We need to determine the shape of the trainable weights for our quantum circuit.
+        weight_shapes = {"weights": (n_quantum_layers, n_qubits, 3)}
         
-        combined_features_dim = self.classical_lstm_hidden_size + self.n_qubits_qelstm
-        fc_hidden_dim1 = config.get("qelstm_fc_hidden1_dim", combined_features_dim // 2)
-        fc_hidden_dim2 = config.get("qelstm_fc_hidden2_dim", fc_hidden_dim1 // 2)
-        fc_dropout = config.get("qelstm_fc_dropout", config.get("dropout", 0.1))
+        # Create the quantum layer using PennyLane's Torch integration.
+        # This makes the quantum circuit behave just like a regular PyTorch layer.
+        self.quantum_layer = qml.qnn.TorchLayer(quantum_circuit, weight_shapes)
 
-        layers = []
-        layers.append(nn.Linear(combined_features_dim, fc_hidden_dim1))
-        layers.append(nn.ReLU())
-        layers.append(nn.Dropout(fc_dropout))
-        
-        if fc_hidden_dim2 > 0 and fc_hidden_dim2 < fc_hidden_dim1 :
-            layers.append(nn.Linear(fc_hidden_dim1, fc_hidden_dim2))
-            layers.append(nn.ReLU())
-            layers.append(nn.Dropout(fc_dropout))
-            layers.append(nn.Linear(fc_hidden_dim2, self.forecast_horizon))
-        else:
-            layers.append(nn.Linear(fc_hidden_dim1, self.forecast_horizon))
-
-        self.fc_output_layers = nn.Sequential(*layers)
-        
-    def _scale_input_for_quantum_enhancer(self, x):
-        # Example scaling: scale to approx [0, 2*pi] for AngleEmbedding
-        return 2 * torch.pi * torch.sigmoid(x) 
+        # 3. Final Classical Fully-Connected Layer
+        # The input to this layer is the combined output of the classical LSTM and the quantum layer.
+        combined_input_size = self.lstm_hidden_size + self.n_qubits
+        self.fc = nn.Linear(combined_input_size, output_size)
 
     def forward(self, x):
-        lstm_out, (h_n, c_n) = self.lstm_layer(x)
-        classical_lstm_final_hidden = h_n[-1, :, :]
-        q_input_classical_slice = classical_lstm_final_hidden[:, :self.n_qubits_qelstm]
-        q_input_scaled = self._scale_input_for_quantum_enhancer(q_input_classical_slice)
-        quantum_enhancement_output = self.quantum_enhancer(q_input_scaled)
-        combined_representation = torch.cat((classical_lstm_final_hidden, quantum_enhancement_output), dim=1)
-        predictions = self.fc_output_layers(combined_representation)
-        return predictions
+        # x shape: (batch_size, sequence_length, input_size)
+        
+        # 1. Pass data through the classical LSTM
+        lstm_out, (hidden_state, _) = self.lstm(x)
+        
+        # We use the final hidden state of the LSTM as the input for our quantum circuit.
+        # This state is a compact representation of the entire input sequence.
+        # The hidden state shape is (num_layers, batch_size, lstm_hidden_size).
+        # We take the last layer's hidden state.
+        classical_features = hidden_state[-1]
+        
+        # The quantum circuit expects input features to be scaled, often to be within [0, pi].
+        # The LSTM's hidden state is already in a reasonable range, but we can add a simple
+        # activation like Tanh to ensure the values are bounded between -1 and 1.
+        # Then, we can scale them to the range expected by AngleEmbedding.
+        quantum_input = torch.tanh(classical_features)
+        
+        # The number of features for the quantum circuit must match the number of qubits.
+        # If lstm_hidden_size is larger than n_qubits, we can use a linear layer to reduce it.
+        # For this implementation, we will assume lstm_hidden_size == n_qubits for simplicity.
+        # A more robust version would add a `nn.Linear(self.lstm_hidden_size, self.n_qubits)` here.
+        if self.lstm_hidden_size != self.n_qubits:
+            # For now, we will truncate or pad. A linear layer is a better approach.
+            if self.lstm_hidden_size > self.n_qubits:
+                quantum_input = quantum_input[:, :self.n_qubits]
+            else:
+                padding = torch.zeros(quantum_input.shape[0], self.n_qubits - self.lstm_hidden_size, device=x.device)
+                quantum_input = torch.cat([quantum_input, padding], dim=1)
+        
+        # 2. Pass the classical features through the quantum layer
+        quantum_features = self.quantum_layer(quantum_input)
+        
+        # 3. Combine classical and quantum features
+        # We concatenate the output of the quantum circuit with the final hidden state of the LSTM.
+        combined_features = torch.cat((classical_features, quantum_features), dim=1)
+        
+        # 4. Pass the combined features through the final fully-connected layer
+        out = self.fc(combined_features)
+        
+        return out
