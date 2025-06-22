@@ -13,6 +13,13 @@ test_size: 0.2
 val_size: 0.1
 random_state: 42
 
+# --- NEW: Feature Engineering Control Panel ---
+feature_engineering:
+  use_time_features: true              # (true/false) Create hour, day, month features?
+  use_cyclical_encoding: true          # (true/false) Convert time features to sin/cos?
+  use_lag_features: true               # (true/false) Create demand_lag_24hr, etc.?
+  use_rolling_window_features: true    # (true/false) Create rolling mean/std?
+
 # Model configuration
 model_type: "TCN"  # Options: LSTM, Transformer, TCN
 input_size: 1      # Will be auto-set based on features
