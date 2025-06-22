@@ -37,7 +37,7 @@ dropout: 0.1
 # --- Training Configuration (keep these identical to the quantum config for a fair test) ---
 batch_size: 8
 learning_rate: 0.01
-num_epochs: 30
+num_epochs: 20
 patience: 10
 checkpoint_freq: 5
 

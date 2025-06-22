@@ -11,37 +11,37 @@ features: []
 
 # --- NEW: Feature Engineering Control Panel ---
 feature_engineering:
-  use_time_features: true              # (true/false) Create hour, day, month features?
-  use_cyclical_encoding: true          # (true/false) Convert time features to sin/cos?
-  use_lag_features: true               # (true/false) Create demand_lag_24hr, etc.?
-  use_rolling_window_features: true    # (true/false) Create rolling mean/std?
+  use_time_features: false              # (true/false) Create hour, day, month features?
+  use_cyclical_encoding: false          # (true/false) Convert time features to sin/cos?
+  use_lag_features: false               # (true/false) Create demand_lag_24hr, etc.?
+  use_rolling_window_features: false    # (true/false) Create rolling mean/std?
 
 
 # Model Configuration
 model_type: "QEnhancedLSTM" 
 
 # --- Parameters for QEnhancedLSTMModel ---
-classical_lstm_hidden_size: 64 
+classical_lstm_hidden_size: 4 
 num_classical_lstm_layers: 1 
 dropout: 0.1     
-hidden_size: 64
+hidden_size: 4
 
 # Quantum Enhancement part
 n_qubits_qelstm: 4
-n_pqc_layers_qelstm: 2
+n_pqc_layers_qelstm: 1
 ansatz_type_qelstm: "StronglyEntanglingLayers"
 
 # FC layers after concatenation in QEnhancedLSTM
-qelstm_fc_hidden1_dim: 48
+qelstm_fc_hidden1_dim: 4
 qelstm_fc_hidden2_dim: 0
 qelstm_fc_dropout: 0.1
 
 # --- General Training Parameters ---
 input_size: 1 
-sequence_length: 168 
-forecast_horizon: 24 
-batch_size: 32 
-learning_rate: 0.001
+sequence_length: 24 
+forecast_horizon: 1
+batch_size: 8 
+learning_rate: 0.01
 num_epochs: 20
 patience: 10 
 random_state: 42 
