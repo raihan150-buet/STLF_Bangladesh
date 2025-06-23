@@ -21,14 +21,14 @@ feature_engineering:
 model_type: "QEnhancedLSTM" 
 
 # --- Parameters for QEnhancedLSTMModel ---
-classical_lstm_hidden_size: 256
-num_classical_lstm_layers: 1 
+classical_lstm_hidden_size: 16
+num_classical_lstm_layers: 2 
 dropout: 0.1     
-hidden_size: 4
+hidden_size: 7
 
 # Quantum Enhancement part
-n_qubits_qelstm: 4
-n_pqc_layers_qelstm: 1
+n_qubits_qelstm: 7
+n_pqc_layers_qelstm: 2
 ansatz_type_qelstm: "StronglyEntanglingLayers"
 
 # FC layers after concatenation in QEnhancedLSTM
@@ -40,8 +40,8 @@ qelstm_fc_dropout: 0.1
 input_size: 1 
 sequence_length: 24 
 forecast_horizon: 1
-batch_size: 32 
-learning_rate: 0.005
+batch_size: 64 
+learning_rate: 0.01
 num_epochs: 20
 patience: 10 
 random_state: 42 

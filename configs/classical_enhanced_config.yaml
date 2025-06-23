@@ -23,20 +23,20 @@ feature_engineering:
 model_type: "Classical_Enhanced_LSTM"  # <-- Use the new model type
 
 # Classical Part Parameters (keep these identical to the quantum config)
-classical_lstm_hidden_size: 256
-num_classical_lstm_layers: 1
+classical_lstm_hidden_size: 16
+num_classical_lstm_layers: 2
 
 # Classical Enhancer Parameter
 # To make it a fair comparison, set this to the same value as 'n_qubits' in your q_config.yaml
-classical_enhancer_size: 4
+classical_enhancer_size: 7
 
 # Common Parameters
 input_size: 1
 dropout: 0.1
 
 # --- Training Configuration (keep these identical to the quantum config for a fair test) ---
-batch_size: 32
-learning_rate: 0.005
+batch_size: 64
+learning_rate: 0.01
 num_epochs: 20
 patience: 10
 checkpoint_freq: 5
