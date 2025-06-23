@@ -21,7 +21,7 @@ feature_engineering:
 model_type: "QEnhancedLSTM" 
 
 # --- Parameters for QEnhancedLSTMModel ---
-classical_lstm_hidden_size: 16
+classical_lstm_hidden_size: 256
 num_classical_lstm_layers: 1 
 dropout: 0.1     
 hidden_size: 4
@@ -41,7 +41,7 @@ input_size: 1
 sequence_length: 24 
 forecast_horizon: 1
 batch_size: 32 
-learning_rate: 0.01
+learning_rate: 0.005
 num_epochs: 20
 patience: 10 
 random_state: 42 
