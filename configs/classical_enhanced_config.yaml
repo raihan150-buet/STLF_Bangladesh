@@ -1,5 +1,5 @@
 # Configuration for the Classical-Enhanced LSTM Model (for benchmarking)
-project: "demand_forecasting"
+project: "demand_forecasting_quantum_comparison"
 experiment_name: "Classical_Enhanced_LSTM_benchmark"
 
 # --- Data Configuration ---
@@ -14,16 +14,16 @@ random_state: 42
 
 # --- NEW: Feature Engineering Control Panel ---
 feature_engineering:
-  use_time_features: true              # (true/false) Create hour, day, month features?
-  use_cyclical_encoding: true          # (true/false) Convert time features to sin/cos?
-  use_lag_features: true               # (true/false) Create demand_lag_24hr, etc.?
-  use_rolling_window_features: true    # (true/false) Create rolling mean/std?
+  use_time_features: false              # (true/false) Create hour, day, month features?
+  use_cyclical_encoding: false          # (true/false) Convert time features to sin/cos?
+  use_lag_features: false               # (true/false) Create demand_lag_24hr, etc.?
+  use_rolling_window_features: false    # (true/false) Create rolling mean/std?
 
 # --- Model Configuration ---
 model_type: "Classical_Enhanced_LSTM"  # <-- Use the new model type
 
 # Classical Part Parameters (keep these identical to the quantum config)
-classical_lstm_hidden_size: 4
+classical_lstm_hidden_size: 16
 num_classical_lstm_layers: 1
 
 # Classical Enhancer Parameter
@@ -35,7 +35,7 @@ input_size: 1
 dropout: 0.1
 
 # --- Training Configuration (keep these identical to the quantum config for a fair test) ---
-batch_size: 8
+batch_size: 32
 learning_rate: 0.01
 num_epochs: 20
 patience: 10
@@ -44,5 +44,10 @@ checkpoint_freq: 5
 # --- W&B Configuration ---
 use_wandb: True
 # Log to the same project as your quantum model for direct comparison!
-wandb_project: "demand_forecasting_quantum"
+wandb_project: "demand_forecasting_quantum_comparison"
 wandb_entity: null
+
+scheduler_config:
+  use_scheduler: True   # Set to True to enable the scheduler
+  patience: 3           # Reduce LR if val_loss doesn't improve for 3 epochs
+  factor: 0.5           # When reducing, new_lr = old_lr * 0.5
