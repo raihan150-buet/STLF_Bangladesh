@@ -9,6 +9,7 @@ from .transformer import TransformerModel
 from .cnn_lstm import CNN_LSTM_Model
 from .classical_enhanced_lstm import ClassicalEnhancedLSTMModel
 from .quantum_inspired_lstm import QuantumInspiredLSTM
+from .classical_conv_lstm import ClassicalConvLSTM
 
 
 def get_model(model_type, config):
@@ -33,7 +34,9 @@ def get_model(model_type, config):
     elif model_type == "classical_enhanced_lstm":
         return ClassicalEnhancedLSTMModel(config)
     elif model_type == "quantum_inspired_lstm":
-        QuantumInspiredLSTM(config)
+        return QuantumInspiredLSTM(config)
+    elif model_type == "classical_conv_lstm":
+        return ClassicalConvLSTM(config)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
