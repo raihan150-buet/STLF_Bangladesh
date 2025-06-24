@@ -14,6 +14,40 @@ from utils.preprocessing import load_and_preprocess_data
 from utils.data_loader import TimeSeriesDataset
 from models import get_model
 
+# --- UPDATED: Helper function to create descriptive filenames ---
+def _create_hyperparameter_filename(config):
+    """Builds a descriptive filename from the experiment's config."""
+    
+    model_type = config.get("model_type", "model")
+    
+    # 1. Get common hyperparameters
+    batch_size = f"b{config.get('batch_size', 'NA')}"
+    
+    # Handle different keys for hidden_size and num_layers
+    hidden_size = f"h{config.get('classical_lstm_hidden_size', config.get('hidden_size', 'NA'))}"
+    num_layers = f"ly{config.get('num_classical_lstm_layers', config.get('num_layers', 'NA'))}"
+    
+    # Format learning rate (e.g., 0.01 -> '01', 0.001 -> '001')
+    lr_str = str(config.get('learning_rate', 'NA')).replace('0.', '')
+    learning_rate = f"lr{lr_str}"
+
+    # 2. Get model-specific enhancer/qubit size
+    enhancer_str = ""
+    if "QEnhanced" in model_type:
+        enhancer_size = config.get('n_qubits', 'NA')
+        enhancer_str = f"q{enhancer_size}"
+    elif "ClassicalEnhanced" in model_type:
+        enhancer_size = config.get('classical_enhancer_size', 'NA')
+        enhancer_str = f"e{enhancer_size}"
+
+    # 3. Combine all parts (Prefix has been removed)
+    parts = [model_type, batch_size, hidden_size, num_layers, learning_rate, enhancer_str]
+    
+    # Filter out any empty parts and join with underscores
+    filename = "_".join(filter(None, parts)) + ".pth"
+    
+    return filename
+
 def save_checkpoint(epoch, model, optimizer, scheduler, config, best_val_loss, epochs_no_improve, is_best=False, current_run_id=None):
     """Saves model checkpoint, including scheduler state."""
     checkpoint_dir = config.get("checkpoint_path", "checkpoints")
@@ -31,11 +65,22 @@ def save_checkpoint(epoch, model, optimizer, scheduler, config, best_val_loss, e
         'epochs_no_improve': epochs_no_improve,
         'wandb_run_id': current_run_id
     }
-    model_identifier = f"{config.get('model_type', 'model')}_{config.get('forecasting_type', 'type')}"
-    filename = f"best_{model_identifier}.pth" if is_best else f"checkpoint_{model_identifier}_epoch_{epoch}.pth"
+    
+    # --- UPDATED FILENAME LOGIC ---
+    if is_best:
+        # Call the new helper function for the best model
+        filename = _create_hyperparameter_filename(config)
+    else:
+        # Keep the old naming for intermediate checkpoints
+        model_identifier = f"{config.get('model_type', 'model')}_{config.get('forecasting_type', 'type')}"
+        filename = f"checkpoint_{model_identifier}_epoch_{epoch}.pth"
+
     path_to_save = os.path.join(save_dir, filename)
     torch.save(checkpoint, path_to_save)
     print(f"Saved checkpoint: {filename} to {save_dir}")
+
+# The rest of the train.py file (load_checkpoint, train function, main block)
+# remains exactly the same as our last version. No other changes are needed.
 
 def load_checkpoint(checkpoint_path, device):
     """Loads a training checkpoint, including scheduler state."""
@@ -69,7 +114,6 @@ def load_checkpoint(checkpoint_path, device):
     }
 
 def train(config_source, data_path, checkpoint_path, saved_model_path, resume_checkpoint_path=None):
-    """Main training loop with integrated LR scheduler."""
     if isinstance(config_source, dict):
         file_config = config_source
     else:
@@ -94,12 +138,10 @@ def train(config_source, data_path, checkpoint_path, saved_model_path, resume_ch
 
     data = load_and_preprocess_data(dict(active_config))
     
-    # --- CORRECTED BLOCK ---
-    # This block now correctly updates the W&B config after preprocessing.
     new_input_size = data['X_train'].shape[2]
     if active_config.get("input_size") != new_input_size:
         print(f"Updating config 'input_size' from {active_config.get('input_size')} to {new_input_size}.")
-        if wandb.run: # Check if a wandb run is active
+        if wandb.run:
             active_config.update({"input_size": new_input_size}, allow_val_change=True)
         else:
             active_config["input_size"] = new_input_size
@@ -119,12 +161,7 @@ def train(config_source, data_path, checkpoint_path, saved_model_path, resume_ch
         optimizer = optim.Adam(model.parameters(), lr=active_config.get("learning_rate", 0.001))
         scheduler_config = active_config.get('scheduler_config', {'use_scheduler': False})
         if scheduler_config.get('use_scheduler'):
-            scheduler = ReduceLROnPlateau(
-                optimizer,
-                mode=scheduler_config.get('mode', 'min'),
-                factor=scheduler_config.get('factor', 0.5),
-                patience=scheduler_config.get('patience', 3)
-            )
+            scheduler = ReduceLROnPlateau(optimizer, mode=scheduler_config.get('mode', 'min'), factor=scheduler_config.get('factor', 0.5), patience=scheduler_config.get('patience', 3))
             print("Using ReduceLROnPlateau learning rate scheduler.")
         else:
             scheduler = type('DummyScheduler', (), {'step': lambda self, *args: None, 'state_dict': lambda self: None, 'load_state_dict': lambda self, *args: None})()
