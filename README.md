@@ -2,7 +2,7 @@
 
 This repository contains the source code for an MSc thesis project focused on short-term electricity demand forecasting. It explores and compares various deep learning models, including classical models like LSTM, TCN, and Transformer, as well as a novel Quantum-Enhanced LSTM (QEnhancedLSTM).
 
-The project is structured for reproducibility and scalability, using a robust workflow that integrates GitHub for version control, Google Drive for data and model storage, and Weights & Biases for experiment tracking and hyperparameter sweeps.
+
 
 ## Core Features
 
