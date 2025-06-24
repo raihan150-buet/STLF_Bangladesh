@@ -1,0 +1,48 @@
+# Configuration for the Classical Conv-LSTM Benchmark Model
+project: "demand_forecasting"
+experiment_name: "Classical_Conv_LSTM_benchmark"
+
+# --- Data Configuration ---
+target_column: "Demand(MW)"
+forecasting_type: "univariate"
+features: []
+sequence_length: 24
+forecast_horizon: 1
+test_size: 0.2
+val_size: 0.2
+random_state: 42
+
+# --- Model Configuration ---
+model_type: "Classical_Conv_LSTM" # <-- Use the new model type
+
+# LSTM-specific parameters
+lstm_hidden_size: 64
+lstm_num_layers: 2
+
+# Standard Conv-specific parameters (use the same names for a fair comparison)
+conv_out_channels: 32
+conv_kernel_size: 3
+
+# Common parameters
+input_size: 1 # Auto-set by preprocessing
+dropout: 0.2
+
+# --- Training Configuration (Keep these identical to the QI-LSTM config) ---
+batch_size: 32
+learning_rate: 0.001
+num_epochs: 50
+patience: 10
+checkpoint_freq: 5
+
+# Scheduler Configuration
+scheduler_config:
+  use_scheduler: True
+  mode: 'min'
+  factor: 0.5
+  patience: 3
+
+# --- W&B Configuration ---
+# Log to the same project as your QI model for direct comparison!
+use_wandb: True
+wandb_project: "demand_forecasting_qi" 
+wandb_entity: null
