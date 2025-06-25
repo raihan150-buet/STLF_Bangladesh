@@ -1,0 +1,55 @@
+# Configuration for the Classical Benchmark of the QDI-LSTM Model
+project: "demand_forecasting"
+experiment_name: "Classical_QDI_Benchmark_Experiment"
+
+# --- Data Configuration (Identical to QDI_LSTM config) ---
+target_column: "Demand(MW)"
+forecasting_type: "univariate"
+features: []
+sequence_length: 24
+forecast_horizon: 1
+test_size: 0.2
+val_size: 0.2
+random_state: 42
+
+# --- Feature Engineering Control Panel ---
+feature_engineering:
+  use_time_features: false
+  use_cyclical_encoding: false
+  use_lag_features: false
+  use_rolling_window_features: false
+
+# --- Model Configuration ---
+model_type: "Classical_QDI" # <-- Use the new model type
+
+# Classical Part Parameters (keep identical to the quantum config)
+classical_lstm_hidden_size: 4
+num_classical_lstm_layers: 1
+
+# Classical Enhancer Parameter
+# To make it a fair comparison, set this to the same value as 'n_qubits'
+classical_enhancer_size: 4
+
+# Common Parameters
+input_size: 1 # Auto-set by preprocessing
+dropout: 0.1
+
+# --- Training Configuration (Identical to QDI_LSTM config for a fair test) ---
+batch_size: 31
+learning_rate: 0.01
+num_epochs: 20
+patience: 15
+checkpoint_freq: 5
+
+# Scheduler Configuration
+scheduler_config:
+  use_scheduler: True
+  mode: 'min'
+  factor: 0.5
+  patience: 3
+
+# --- W&B Configuration ---
+use_wandb: True
+# Log to the same project as your quantum model for direct comparison!
+wandb_project: "demand_forecasting_SOTA_Quantum"
+wandb_entity: null

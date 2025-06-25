@@ -1,0 +1,53 @@
+# Configuration for the QDI-Enhanced LSTM Model (inspired by HQRNN)
+project: "demand_forecasting"
+experiment_name: "QDI_LSTM_SOTA_experiment"
+
+# --- Data Configuration ---
+target_column: "Demand(MW)"
+forecasting_type: "univariate"
+features: [] # External features to include
+sequence_length: 24
+forecast_horizon: 1
+test_size: 0.2
+val_size: 0.2
+random_state: 42
+
+# --- Feature Engineering Control Panel ---
+feature_engineering:
+  use_time_features: false
+  use_cyclical_encoding: false
+  use_lag_features: false
+  use_rolling_window_features: false
+
+# --- Model Configuration ---
+model_type: "QDI_LSTM"
+
+# Classical Part Parameters
+classical_lstm_hidden_size: 4
+num_classical_lstm_layers: 1
+
+# Quantum Part Parameters
+n_qubits: 4 # Must match classical_lstm_hidden_size for the to_quantum layer to work directly
+
+# Common Parameters
+input_size: 1 # This will be auto-set by the preprocessing script based on final feature count
+dropout: 0.1
+
+# --- Training Configuration ---
+batch_size: 32 # Keep batch size smaller for quantum simulations
+learning_rate: 0.01
+num_epochs: 20 # A higher number of epochs to allow scheduler to work
+patience: 15    # Increased patience for early stopping
+checkpoint_freq: 5
+
+# Scheduler Configuration
+scheduler_config:
+  use_scheduler: True
+  mode: 'min'
+  factor: 0.5
+  patience: 3
+
+# --- W&B Configuration ---
+use_wandb: True
+wandb_project: "demand_forecasting_SOTA_Quantum"
+wandb_entity: null
