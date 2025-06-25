@@ -1,0 +1,53 @@
+# Configuration for the Quantum Residual LSTM (QResLSTM) Model
+project: "demand_forecasting"
+experiment_name: "QResLSTM_Experiment"
+
+# --- Data Configuration ---
+target_column: "Demand(MW)"
+forecasting_type: "univariate"
+features: []
+sequence_length: 24
+forecast_horizon: 1
+test_size: 0.2
+val_size: 0.2
+random_state: 42
+
+# Feature Engineering
+feature_engineering:
+  use_time_features: false
+  use_cyclical_encoding: false
+  use_lag_features: false
+  use_rolling_window_features: false
+
+# --- Model Configuration ---
+model_type: "QResLSTM"
+
+# Model Hyperparameters
+hidden_size: 128          # Size of the classical LSTM hidden state
+n_qubits: 4              # Number of qubits in the residual quantum circuit
+q_depth: 2               # Number of layers in the VQC
+q_delta: 0.05            # Contribution factor of the quantum residual
+
+# Common Parameters
+input_size: 1 # Auto-set by preprocessing
+dropout: 0.2
+num_layers: 2 # For the classical LSTM
+
+# --- Training Configuration ---
+batch_size: 32
+learning_rate: 0.001
+num_epochs: 20
+patience: 10
+checkpoint_freq: 5
+
+# Scheduler Configuration
+scheduler_config:
+  use_scheduler: True
+  mode: 'min'
+  factor: 0.5
+  patience: 5
+
+# --- W&B Configuration ---
+use_wandb: True
+wandb_project: "demand_forecasting_SOTA_Quantum"
+wandb_entity: null

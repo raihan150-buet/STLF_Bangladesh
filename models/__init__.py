@@ -12,6 +12,8 @@ from .quantum_inspired_lstm import QuantumInspiredLSTM
 from .classical_conv_lstm import ClassicalConvLSTM
 from .qdi_lstm import QDILSTM
 from .classical_qdi import ClassicalQDI
+from .qres_lstm import QResLSTM
+from .classical_res_lstm import ClassicalResLSTM
 
 
 def get_model(model_type, config):
@@ -43,6 +45,10 @@ def get_model(model_type, config):
         return QDILSTM(config)
     elif model_type == "classical_qdi":
         return ClassicalQDI(config)
+    elif model_type == "qres_lstm":
+        return QResLSTM(config)
+    elif model_type == "classical_res_lstm":
+        return ClassicalResLSTM(config)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 
