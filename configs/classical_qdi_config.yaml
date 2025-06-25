@@ -35,7 +35,7 @@ input_size: 1 # Auto-set by preprocessing
 dropout: 0.1
 
 # --- Training Configuration (Identical to QDI_LSTM config for a fair test) ---
-batch_size: 31
+batch_size: 32
 learning_rate: 0.01
 num_epochs: 20
 patience: 15
