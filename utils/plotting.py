@@ -123,4 +123,56 @@ def plot_predictions(y_true, y_pred, n_samples=3, forecast_horizon=None, save_pa
         plt.show()
     elif not plt.gcf().get_axes() : # If this function created the figure and not showing, close it
         plt.close(fig)
+
+
+def plot_test_set_results(y_true_unscaled, y_pred_unscaled, n_samples=5):
+    """
+    Creates a comprehensive plot of model performance on the entire test set.
+
+    This function plots:
+    1. The ground truth of the entire test set.
+    2. The one-step-ahead forecast for every point.
+    3. A few examples of the full multi-step forecast horizon.
+    """
+    fig, ax = plt.subplots(figsize=(20, 8))
+    
+    # 1. Prepare the data
+    # The y_true is a set of sequences. To plot it continuously, we can stitch it together
+    # by taking the first step of each sequence.
+    y_true_continuous = y_true_unscaled[:, 0]
+    
+    # The y_pred contains one-step-ahead forecasts for each point.
+    y_pred_one_step = y_pred_unscaled[:, 0]
+
+    # 2. Plot the main series
+    ax.plot(y_true_continuous, label='Actual Demand', color='dodgerblue', linewidth=2)
+    ax.plot(y_pred_one_step, label='One-Step-Ahead Forecast', color='orangered', linestyle='--', linewidth=2)
+
+    # 3. Overlay sample full-horizon forecasts
+    num_total_samples = len(y_true_unscaled)
+    forecast_horizon = y_true_unscaled.shape[1]
+    
+    # Choose evenly spaced indices for the sample plots
+    sample_indices = np.linspace(0, num_total_samples - forecast_horizon, n_samples, dtype=int)
+
+    for i, idx in enumerate(sample_indices):
+        # The x-axis range for this specific forecast
+        forecast_range = np.arange(idx, idx + forecast_horizon)
+        
+        # Plot the full forecast horizon
+        ax.plot(forecast_range, y_pred_unscaled[idx], 
+                label=f'Sample Forecast {i+1}' if i == 0 else "", 
+                color='darkgreen', linestyle=':', marker='o', markersize=4)
+
+    # 4. Formatting
+    ax.set_title('Model Performance on Test Set', fontsize=18, fontweight='bold')
+    ax.set_xlabel('Time Steps in Test Set', fontsize=14)
+    ax.set_ylabel('Demand (MW)', fontsize=14)
+    ax.legend(fontsize=12)
+    ax.grid(True, which='both', linestyle='--', linewidth=0.5)
+    plt.tight_layout()
+    
+    return fig
+
+
     # If drawing on an external figure and not showing, do not close it here. Caller manages it.
