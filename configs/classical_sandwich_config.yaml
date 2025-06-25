@@ -4,8 +4,8 @@ experiment_name: "Classical_Sandwich_LSTM_Benchmark"
 
 # --- Data Configuration (Identical to L-QLSTM config) ---
 target_column: "Demand(MW)"
-forecasting_type: "multivariate"
-features: ["Heat_Index_C", "is_weekend"]
+forecasting_type: "univariate"
+features: []
 sequence_length: 24
 forecast_horizon: 1
 test_size: 0.2
@@ -14,8 +14,8 @@ random_state: 42
 
 # Feature Engineering
 feature_engineering:
-  use_time_features: true
-  use_cyclical_encoding: true
+  use_time_features: false
+  use_cyclical_encoding: false
   use_lag_features: false
   use_rolling_window_features: false
 
@@ -25,16 +25,16 @@ model_type: "Classical_Sandwich_LSTM"
 # Model Hyperparameters
 hidden_size: 32
 # For a fair benchmark, this should match n_qubits in the L-QLSTM config
-classical_enhancer_size: 8
+classical_enhancer_size: 4
 
 # Common Parameters
 input_size: 1 # Auto-set by preprocessing
 dropout: 0.1
 
 # --- Training Configuration (Identical to L-QLSTM config) ---
-batch_size: 8 # Keep batch size small to match the quantum run
+batch_size: 32 # Keep batch size small to match the quantum run
 learning_rate: 0.005
-num_epochs: 50
+num_epochs: 20
 patience: 10
 checkpoint_freq: 5
 
