@@ -3,10 +3,10 @@ import torch.nn as nn
 import pennylane as qml
 from .base_model import BaseModel
 
-class QDILSTMModel(BaseModel):
+class QDILSTM(BaseModel):
     """A dedicated implementation of the HQRNN-inspired model, now with instance-specific device and batching fix."""
     def __init__(self, config):
-        super(QDILSTMModel, self).__init__(config)
+        super(QDILSTM, self).__init__(config)
         
         self.n_qubits = self.config['n_qubits']
         self.dev = qml.device("default.qubit", wires=self.n_qubits)
