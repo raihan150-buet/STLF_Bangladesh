@@ -45,10 +45,10 @@ class L_QLSTM_Cell(nn.Module):
         h_next = o * torch.tanh(c_next)
         return h_next, c_next
 
-class L_QLSTM_Model(BaseModel):
+class L_QLSTM(BaseModel):
     """The full L-QLSTM model that wraps the custom cell."""
     def __init__(self, config):
-        super(L_QLSTM_Model, self).__init__(config)
+        super(L_QLSTM, self).__init__(config)
 
         # --- Create an instance-specific quantum device ---
         self.n_qubits = config['n_qubits']
