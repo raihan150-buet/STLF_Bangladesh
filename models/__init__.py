@@ -10,6 +10,8 @@ from .cnn_lstm import CNN_LSTM_Model
 from .classical_enhanced_lstm import ClassicalEnhancedLSTMModel
 from .quantum_inspired_lstm import QuantumInspiredLSTM
 from .classical_conv_lstm import ClassicalConvLSTM
+from .l_qlstm import L_QLSTM
+from .classical_sandwich_lstm import Classical_Sandwich_LSTM
 
 
 def get_model(model_type, config):
@@ -37,6 +39,10 @@ def get_model(model_type, config):
         return QuantumInspiredLSTM(config)
     elif model_type == "classical_conv_lstm":
         return ClassicalConvLSTM(config)
+    elif model_type == "l_qlstm":
+        return L_QLSTM(config)
+    elif model_type == "classical_sandwich_lstm":
+        return Classical_Sandwich_LSTM(config)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 

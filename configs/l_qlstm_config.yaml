@@ -1,0 +1,51 @@
+# Configuration for the L-QLSTM "Sandwich" Model
+project: "demand_forecasting"
+experiment_name: "L_QLSTM_Sandwich_Experiment"
+
+# --- Data Configuration ---
+target_column: "Demand(MW)"
+forecasting_type: "multivariate"
+features: ["Heat_Index_C", "is_weekend"]
+sequence_length: 24 # Shorter sequence lengths are better for RNNs with complex cells
+forecast_horizon: 1
+test_size: 0.2
+val_size: 0.2
+random_state: 42
+
+# Feature Engineering
+feature_engineering:
+  use_time_features: true
+  use_cyclical_encoding: true
+  use_lag_features: false # Disable lag features to rely on the cell's memory
+  use_rolling_window_features: false
+
+# --- Model Configuration ---
+model_type: "L_QLSTM"
+
+# Model Hyperparameters
+hidden_size: 32        # Size of the classical hidden state
+n_qubits: 8            # Number of qubits in the sandwiched VQC
+n_quantum_layers: 2    # Depth of the VQC
+
+# Common Parameters
+input_size: 1 # Auto-set by preprocessing
+dropout: 0.1  # Note: Dropout is not used in this custom cell implementation
+
+# --- Training Configuration ---
+batch_size: 8   # Keep batch size small for quantum simulation
+learning_rate: 0.005
+num_epochs: 50
+patience: 10
+checkpoint_freq: 5
+
+# Scheduler Configuration
+scheduler_config:
+  use_scheduler: True
+  mode: 'min'
+  factor: 0.5
+  patience: 3
+
+# --- W&B Configuration ---
+use_wandb: True
+wandb_project: "demand_forecasting_SOTA_Quantum"
+wandb_entity: null
