@@ -6,8 +6,7 @@ from .base_model import BaseModel
 class QResLSTM(BaseModel):
     """
     A Quantum-Enhanced LSTM with a Residual Connection.
-    This version implements the 'no_grad' technique for the quantum forward
-    pass to ensure training stability, treating the VQC as a fixed feature extractor.
+    This version includes the fix for the PennyLane batching error.
     """
     def __init__(self, config):
         super(QResLSTM, self).__init__(config)
@@ -45,47 +44,39 @@ class QResLSTM(BaseModel):
         )
         
         # --- Hybrid Components ---
-        # Quantum layer setup
         weight_shapes = {"weights": (self.q_depth, self.n_qubits, 2)}
         self.qlayer = qml.qnn.TorchLayer(quantum_circuit, weight_shapes)
         
-        # Dimension adapter to prepare input for the quantum circuit
         self.to_quantum = nn.Sequential(
             nn.Linear(config['hidden_size'], self.n_qubits),
-            nn.Tanh() # Keep values in [-1,1]
+            nn.Tanh()
         )
         
-        # Layer to process the quantum output for the residual connection
         self.residual_processor = nn.Sequential(
             nn.Linear(self.n_qubits, config['hidden_size']),
             nn.LayerNorm(config['hidden_size'])
         )
         
-        # Final prediction layer
         self.fc = nn.Linear(config['hidden_size'], config['forecast_horizon'])
 
     def forward(self, x):
-        # 1. Classical LSTM processing
         lstm_out, _ = self.lstm(x)
-        last_hidden = lstm_out[:, -1, :] # Get the final hidden state
+        last_hidden = lstm_out[:, -1, :]
         
-        # 2. Quantum Residual Processing
         quantum_input = self.to_quantum(last_hidden)
         
-        # --- Quantum Forward Pass with No Gradients for Stability ---
-        with torch.no_grad():
-            quantum_features = self.qlayer(quantum_input)
-        # --- End of No-Grad Block ---
-
-        # Process the quantum features and scale their contribution
-        residual = self.residual_processor(quantum_features)
-        residual = residual * self.q_delta
+        # --- CORRECTED BATCH PROCESSING ---
+        # Iterate through the batch, process each item individually, then stack.
+        quantum_features_list = [self.qlayer(inp) for inp in quantum_input]
+        quantum_features = torch.stack(quantum_features_list)
+        # --- End of Fix ---
         
-        # 3. Apply the Residual Connection
-        # The gradients will flow back through `last_hidden` and `residual`,
-        # but not into the `qlayer` itself.
+        # Use no_grad for stability as per your research
+        with torch.no_grad():
+            residual = self.residual_processor(quantum_features)
+            residual = residual * self.q_delta
+        
         hybrid_features = last_hidden + residual
         
-        # 4. Final Prediction
         output = self.fc(hybrid_features)
         return output
