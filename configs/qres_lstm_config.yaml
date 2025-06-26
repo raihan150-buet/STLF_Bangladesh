@@ -20,7 +20,7 @@ feature_engineering:
   use_rolling_window_features: false
 
 # --- Model Configuration ---
-model_type: "QResLSTM"
+model_type: "QRes_LSTM"
 
 # Model Hyperparameters
 hidden_size: 128          # Size of the classical LSTM hidden state
