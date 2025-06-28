@@ -20,7 +20,7 @@ feature_engineering:
   use_rolling_window_features: false
 
 # --- Model Configuration ---
-model_type: "ClassicalResLSTM" # <-- Use the new model type
+model_type: "Classical_Res_LSTM" # <-- Use the new model type
 
 # Model Hyperparameters (Identical to QResLSTM for a fair comparison)
 hidden_size: 128
@@ -34,7 +34,7 @@ dropout: 0.2
 # --- Training Configuration (Identical to QResLSTM) ---
 batch_size: 32
 learning_rate: 0.001
-num_epochs: 20
+num_epochs: 50
 patience: 10
 checkpoint_freq: 5
 
