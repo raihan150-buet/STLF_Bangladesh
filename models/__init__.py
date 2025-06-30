@@ -1,54 +1,65 @@
-# This file makes the 'models' directory a Python package.
-# It also contains the factory function to get a model by name.
+from .base_model import BaseModel
 
+# --- Import Classical Models ---
 from .lstm import LSTMModel
 from .tcn import TCNModel
-from .q_e_lstm import QEnhancedLSTMModel
-from .base_model import BaseModel
-from .transformer import TransformerModel
 from .cnn_lstm import CNN_LSTM_Model
-from .classical_enhanced_lstm import ClassicalEnhancedLSTMModel
+from .transformer_model import TransformerModel
+
+# --- Import Quantum-Inspired and SOTA Classical Models ---
 from .quantum_inspired_lstm import QuantumInspiredLSTM
 from .classical_conv_lstm import ClassicalConvLSTM
-from .qdi_lstm import QDILSTM
-from .classical_qdi import ClassicalQDI
+
+# --- Import Hybrid Quantum & Benchmark Models ---
+from .q_e_lstm import QEnhancedLSTMModel
+from .classical_enhanced_lstm import ClassicalEnhancedLSTMModel
+from .qdi_lstm import QDILSTMModel
+from .classical_qdi_benchmark import ClassicalQDIBenchmarkModel
 from .qres_lstm import QResLSTM
 from .classical_res_lstm import ClassicalResLSTM
 
 
-def get_model(model_type, config):
+# A dictionary mapping the model_type string from your config to the actual model class.
+
+MODEL_REGISTRY = {
+    # Standard Classical
+    "lstm": LSTMModel,
+    "tcn": TCNModel,
+    "cnn_lstm": CNN_LSTM_Model,
+    "transformer": TransformerModel,
+    
+    # Advanced Classical & Quantum-Inspired
+    "quantum_inspired_lstm": QuantumInspiredLSTM,
+    "classical_conv_lstm": ClassicalConvLSTM,
+    
+    # Hybrid Quantum Models
+    "qenhancedlstm": QEnhancedLSTMModel,
+    "qdi_lstm": QDILSTMModel,
+    "qres_lstm": QResLSTM,
+    
+    # Corresponding Classical Benchmarks
+    "classical_enhanced_lstm": ClassicalEnhancedLSTMModel,
+    "classical_qdi_benchmark": ClassicalQDIBenchmarkModel,
+    "classical_res_lstm": ClassicalResLSTM,
+}
+
+def get_model(model_type: str, config: dict) -> BaseModel:
     """
     Factory function to return a model instance based on its type.
+    
+    Args:
+        model_type (str): The name of the model, as defined in the config file.
+        config (dict): The configuration dictionary for the experiment.
+        
+    Returns:
+        An instance of the requested model class.
     """
-    model_type = model_type.lower()
+    model_type_lower = model_type.lower()
     
-    # CORRECTED: All models that are defined to take a 'config' object
-    # should be called the same way for consistency.
+    model_class = MODEL_REGISTRY.get(model_type_lower)
     
-    if model_type == "lstm":
-        return LSTMModel(config)
-    elif model_type == "tcn":
-        return TCNModel(config)
-    elif model_type == "qenhancedlstm":
-        return QEnhancedLSTMModel(config)
-    elif model_type == "transformer":
-        return TransformerModel(config)
-    elif model_type == "cnn_lstm":
-        return CNN_LSTM_Model(config)
-    elif model_type == "classical_enhanced_lstm":
-        return ClassicalEnhancedLSTMModel(config)
-    elif model_type == "quantum_inspired_lstm":
-        return QuantumInspiredLSTM(config)
-    elif model_type == "classical_conv_lstm":
-        return ClassicalConvLSTM(config)
-    elif model_type == "qdi_lstm":
-        return QDILSTM(config)
-    elif model_type == "classical_qdi":
-        return ClassicalQDI(config)
-    elif model_type == "qres_lstm":
-        return QResLSTM(config)
-    elif model_type == "classical_res_lstm":
-        return ClassicalResLSTM(config)
+    if model_class:
+        # All our models are designed to accept the entire config dictionary
+        return model_class(config)
     else:
-        raise ValueError(f"Unknown model type: {model_type}")
-
+        raise ValueError(f"Unknown model type: '{model_type}'. Please check your config file and models/__init__.py.")
