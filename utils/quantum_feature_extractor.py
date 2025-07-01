@@ -7,6 +7,7 @@ import yaml
 import argparse
 import os
 from tqdm import tqdm
+from sklearn.preprocessing import MinMaxScaler
 
 def create_quantum_features(config_path, data_path, output_path):
     """
