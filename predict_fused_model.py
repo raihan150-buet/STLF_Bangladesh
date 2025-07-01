@@ -5,6 +5,7 @@ import yaml
 import os
 from datetime import timedelta
 import argparse
+import wandb
 
 # We need to import the preprocessing function to get access to the scalers
 from utils.fused_preprocessing import load_and_prepare_fused_data
