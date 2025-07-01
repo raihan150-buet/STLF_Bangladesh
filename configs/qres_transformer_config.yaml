@@ -1,0 +1,52 @@
+# Configuration for the Quantum Residual Transformer Model
+project: "demand_forecasting"
+experiment_name: "Quantum_Residual_Transformer_Experiment"
+
+# --- Data & Feature Configuration ---
+target_column: "Demand(MW)"
+
+
+classical_features:
+  - "Demand(MW)" # Including the target as a feature is common
+
+
+sequence_length: 24
+forecast_horizon: 1
+test_size: 0.2
+val_size: 0.2
+random_state: 42
+
+# --- Model Configuration ---
+model_type: "Quantum_Residual_Transformer"
+use_quantum_features: true # Set to 'false' to run the exact same model as a purely classical benchmark
+
+# The number of features in your 'quantum_features.csv' file.
+# This must match the number of features you used in feature_extraction_config.yaml.
+quantum_feature_size: 1 
+
+# Transformer-specific hyperparameters
+d_model: 128          # The main embedding dimension of the model (must be divisible by n_head)
+n_head: 8             # Number of attention heads
+num_layers: 3         # Number of stacked Transformer Encoder layers
+dim_feedforward: 512  # Dimension of the feed-forward network within the encoder
+dropout: 0.1
+
+# --- Training Configuration ---
+input_size: 1 # This will be auto-set by the preprocessing script based on the number of classical_features
+batch_size: 32
+learning_rate: 0.0001 # Transformers often prefer smaller learning rates
+num_epochs: 100
+patience: 15
+checkpoint_freq: 5
+
+# Scheduler Configuration
+scheduler_config:
+  use_scheduler: True
+  mode: 'min'
+  factor: 0.5
+  patience: 5
+
+# --- W&B Configuration ---
+use_wandb: True
+wandb_project: "demand_forecasting_fused_features"
+wandb_entity: null
