@@ -18,6 +18,8 @@ from .classical_qdi_benchmark import ClassicalQDIBenchmarkModel
 from .qres_lstm import QResLSTM
 from .classical_res_lstm import ClassicalResLSTM
 
+from .quantum_residual_transformer import QuantumResidualTransformer
+
 
 # A dictionary mapping the model_type string from your config to the actual model class.
 
@@ -41,6 +43,9 @@ MODEL_REGISTRY = {
     "classical_enhanced_lstm": ClassicalEnhancedLSTMModel,
     "classical_qdi_benchmark": ClassicalQDIBenchmarkModel,
     "classical_res_lstm": ClassicalResLSTM,
+
+    # Fused Feature Model
+    "quantum_residual_transformer": QuantumResidualTransformer
 }
 
 def get_model(model_type: str, config: dict) -> BaseModel:
