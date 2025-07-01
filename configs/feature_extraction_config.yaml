@@ -1,0 +1,6 @@
+
+# Circuit Depth
+q_depth: 2
+#features
+features_for_quantum:
+  - "Demand(MW)"
