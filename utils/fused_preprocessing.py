@@ -4,8 +4,9 @@ from sklearn.preprocessing import MinMaxScaler
 
 def load_and_prepare_fused_data(config):
     """
-    Loads data based on config flags. Can load classical-only or fused classical-quantum data.
+    Loads, fuses, sequences, and correctly scales classical and quantum features.
     """
+    # 1. Load Original and Quantum Data
     try:
         if config["data_path"].endswith('.xlsx'):
             df_classical = pd.read_excel(config["data_path"], engine='openpyxl')
@@ -32,6 +33,7 @@ def load_and_prepare_fused_data(config):
 
     df_full['is_weekend'] = df_full.index.dayofweek.isin([4, 5]).astype(int)
 
+    # 2. Select Features and Create Sequences
     target_col = config["target_column"]
     classical_features_to_use = config.get("classical_features", [])
     
@@ -55,23 +57,59 @@ def load_and_prepare_fused_data(config):
     if config.get('use_quantum_features', False):
         X_quantum = np.array(X_quantum)
     
+    # 3. Temporal Split
     test_size = int(len(y) * config["test_size"])
     val_size = int(len(y) * config["val_size"])
     X_classical_train, X_classical_val, X_classical_test = X_classical[:-(test_size+val_size)], X_classical[-(test_size+val_size):-test_size], X_classical[-test_size:]
     y_train, y_val, y_test = y[:-(test_size+val_size)], y[-(test_size+val_size):-test_size], y[-test_size:]
     
+    # --- 4. ADDED SCALING LOGIC ---
+    # Initialize scalers
+    classical_feature_scaler = MinMaxScaler()
+    target_scaler = MinMaxScaler()
+
+    # Reshape classical features to 2D for scaler, fit ONLY on training data
+    n_samples_train, seq_len_train, n_features_train = X_classical_train.shape
+    X_classical_train_reshaped = X_classical_train.reshape(-1, n_features_train)
+    classical_feature_scaler.fit(X_classical_train_reshaped)
+
+    # Transform all classical feature sets
+    X_classical_train = classical_feature_scaler.transform(X_classical_train_reshaped).reshape(X_classical_train.shape)
+    X_classical_val = classical_feature_scaler.transform(X_classical_val.reshape(-1, n_features_train)).reshape(X_classical_val.shape)
+    X_classical_test = classical_feature_scaler.transform(X_classical_test.reshape(-1, n_features_train)).reshape(X_classical_test.shape)
+
+    # Fit and transform target variable separately
+    target_scaler.fit(y_train)
+    y_train = target_scaler.transform(y_train)
+    y_val = target_scaler.transform(y_val)
+    y_test = target_scaler.transform(y_test)
+    
     result = {
         "X_classical_train": X_classical_train, "y_train": y_train,
         "X_classical_val": X_classical_val, "y_val": y_val,
         "X_classical_test": X_classical_test, "y_test": y_test,
+        "classical_feature_scaler": classical_feature_scaler,
+        "target_scaler": target_scaler,
     }
     
     if config.get('use_quantum_features', False):
+        # Also scale the quantum features if they exist
+        quantum_feature_scaler = MinMaxScaler()
         X_quantum_train, X_quantum_val, X_quantum_test = X_quantum[:-(test_size+val_size)], X_quantum[-(test_size+val_size):-test_size], X_quantum[-test_size:]
+        
+        n_samples_q, seq_len_q, n_features_q = X_quantum_train.shape
+        X_quantum_train_reshaped = X_quantum_train.reshape(-1, n_features_q)
+        quantum_feature_scaler.fit(X_quantum_train_reshaped)
+        
+        X_quantum_train = quantum_feature_scaler.transform(X_quantum_train_reshaped).reshape(X_quantum_train.shape)
+        X_quantum_val = quantum_feature_scaler.transform(X_quantum_val.reshape(-1, n_features_q)).reshape(X_quantum_val.shape)
+        X_quantum_test = quantum_feature_scaler.transform(X_quantum_test.reshape(-1, n_features_q)).reshape(X_quantum_test.shape)
+        
         result.update({
             "X_quantum_train": X_quantum_train,
             "X_quantum_val": X_quantum_val,
             "X_quantum_test": X_quantum_test,
+            "quantum_feature_scaler": quantum_feature_scaler,
         })
     
     return result
