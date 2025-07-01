@@ -13,8 +13,8 @@ from .classical_conv_lstm import ClassicalConvLSTM
 # --- Import Hybrid Quantum & Benchmark Models ---
 from .q_e_lstm import QEnhancedLSTMModel
 from .classical_enhanced_lstm import ClassicalEnhancedLSTMModel
-from .qdi_lstm import QDILSTMModel
-from .classical_qdi_benchmark import ClassicalQDIBenchmarkModel
+from .qdi_lstm import QDILSTM
+from .classical_qdi import ClassicalQDI
 from .qres_lstm import QResLSTM
 from .classical_res_lstm import ClassicalResLSTM
 
@@ -36,12 +36,12 @@ MODEL_REGISTRY = {
     
     # Hybrid Quantum Models
     "qenhancedlstm": QEnhancedLSTMModel,
-    "qdi_lstm": QDILSTMModel,
+    "qdi_lstm": QDILSTM,
     "qres_lstm": QResLSTM,
     
     # Corresponding Classical Benchmarks
     "classical_enhanced_lstm": ClassicalEnhancedLSTMModel,
-    "classical_qdi_benchmark": ClassicalQDIBenchmarkModel,
+    "classical_qdi_benchmark": ClassicalQDI,
     "classical_res_lstm": ClassicalResLSTM,
 
     # Fused Feature Model
