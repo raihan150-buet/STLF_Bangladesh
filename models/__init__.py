@@ -4,7 +4,7 @@ from .base_model import BaseModel
 from .lstm import LSTMModel
 from .tcn import TCNModel
 from .cnn_lstm import CNN_LSTM_Model
-from .transformer_model import TransformerModel
+from .transformer import TransformerModel
 
 # --- Import Quantum-Inspired and SOTA Classical Models ---
 from .quantum_inspired_lstm import QuantumInspiredLSTM
