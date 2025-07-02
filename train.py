@@ -173,7 +173,10 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
     # Load configuration
     with open(config_file) as f:
         config = yaml.safe_load(f)
-    
+        
+    config['data_path'] = data_path
+    config['checkpoint_dir'] = checkpoint_dir
+    config['saved_models_dir'] = saved_models_dir
     # Initialize device
     device = get_default_device()
     print(f"Using device: {device}")
