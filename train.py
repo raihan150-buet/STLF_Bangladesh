@@ -31,14 +31,14 @@ class TrainingLogger:
     def log(self, metrics: Dict, step: Optional[int] = None):
         """Log metrics to both console and W&B."""
         log_str = " | ".join(f"{k}: {v:.6f}" if isinstance(v, float) else f"{k}: {v}" 
-                            for k, v in metrics.items())
+                             for k, v in metrics.items())
         print(log_str)
         
         if self.use_wandb and wandb.run:
             wandb.log(metrics, step=step)
 
 def create_filename(config: Dict, epoch: Optional[int] = None, 
-                   is_best: bool = False, run_id: Optional[str] = None) -> str:
+                    is_best: bool = False, run_id: Optional[str] = None) -> str:
     """Generate standardized filenames for checkpoints."""
     model_name = config.get("model_type", "model")
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -83,8 +83,7 @@ class CheckpointManager:
             
         checkpoint = torch.load(path, map_location=device)
         
-        # Handle legacy checkpoints
-        if 'best_val_loss' in checkpoint:  # Backward compatibility
+        if 'best_val_loss' in checkpoint:
             checkpoint['metrics'] = {'val_loss': checkpoint['best_val_loss']}
             
         return checkpoint
@@ -127,8 +126,8 @@ def initialize_wandb(config: Dict, run_id: Optional[str] = None) -> bool:
         return False
 
 def train_epoch(model: nn.Module, dataloader: DataLoader, 
-               optimizer: optim.Optimizer, criterion: nn.Module, 
-               device: torch.device, clip_grad: Optional[float] = None) -> float:
+                optimizer: optim.Optimizer, criterion: nn.Module, 
+                device: torch.device, clip_grad: Optional[float] = None) -> float:
     """Train model for one epoch."""
     model.train()
     total_loss = 0.0
@@ -153,7 +152,7 @@ def train_epoch(model: nn.Module, dataloader: DataLoader,
     return total_loss / len(dataloader.dataset)
 
 def validate(model: nn.Module, dataloader: DataLoader, 
-            criterion: nn.Module, device: torch.device) -> float:
+             criterion: nn.Module, device: torch.device) -> float:
     """Validate model performance."""
     model.eval()
     total_loss = 0.0
@@ -168,31 +167,27 @@ def validate(model: nn.Module, dataloader: DataLoader,
     return total_loss / len(dataloader.dataset)
 
 def train(config_file: str, data_path: str, checkpoint_dir: str, 
-         saved_models_dir: str, resume_from: Optional[str] = None):
+          saved_models_dir: str, resume_from: Optional[str] = None):
     """Main training procedure with full training lifecycle management."""
-    # Load configuration
     with open(config_file) as f:
         config = yaml.safe_load(f)
-
+    
     config['data_path'] = data_path
     config['checkpoint_dir'] = checkpoint_dir
     config['saved_models_dir'] = saved_models_dir
-    # Initialize device
+    
     device = get_default_device()
     print(f"Using device: {device}")
     
-    # Handle W&B resuming
     wandb_run_id = None
     if resume_from:
         checkpoint = CheckpointManager.load(resume_from, 'cpu')
         wandb_run_id = checkpoint.get('wandb_run_id')
     
-    # Initialize W&B
     use_wandb = initialize_wandb(config, wandb_run_id)
     if use_wandb:
         config = wandb.config
     
-    # Load and prepare data
     data = load_and_preprocess_data(config)
     train_loader = DataLoader(
         TimeSeriesDataset(data["X_train"], data["y_train"]),
@@ -205,7 +200,6 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         shuffle=False
     )
     
-    # Initialize model and training components
     if resume_from:
         checkpoint = CheckpointManager.load(resume_from, device)
         model = get_model(checkpoint['config']["model_type"], checkpoint['config'])
@@ -216,11 +210,10 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         
         scheduler_params = checkpoint['config'].get('scheduler_config', {})
-        if scheduler_params.pop('use_scheduler', False): # .pop() checks and removes the key
+        if scheduler_params.pop('use_scheduler', False):
             scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
             scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         else:
-            # Create a dummy scheduler if it wasn't used in the original run
             scheduler = type('DummyScheduler', (), {
                 'step': lambda *args: None,
                 'state_dict': lambda: None,
@@ -232,7 +225,17 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
     else:
         model = get_model(config["model_type"], config).to(device)
         optimizer = optim.Adam(model.parameters(), lr=config.get("learning_rate", 0.001))
-        scheduler = ReduceLROnPlateau(optimizer, **config.get('scheduler_config', {}))
+        
+        scheduler_params = config.get('scheduler_config', {})
+        if scheduler_params.pop('use_scheduler', False):
+            scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
+        else:
+            scheduler = type('DummyScheduler', (), {
+                'step': lambda *args: None,
+                'state_dict': lambda: None,
+                'load_state_dict': lambda *args: None
+            })()
+        
         start_epoch = 0
         best_metrics = {'val_loss': float('inf')}
     
@@ -241,7 +244,6 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
     early_stopper = EarlyStopper(patience=config.get("patience", 10))
     logger = TrainingLogger(use_wandb)
     
-    # Main training loop
     for epoch in range(start_epoch, config.get("num_epochs", 50)):
         train_loss = train_epoch(
             model, train_loader, optimizer, criterion, device,
@@ -251,7 +253,6 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         val_loss = validate(model, val_loader, criterion, device)
         scheduler.step(val_loss)
         
-        # Log metrics
         metrics = {
             'epoch': epoch + 1,
             'train_loss': train_loss,
@@ -260,7 +261,6 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         }
         logger.log(metrics)
         
-        # Save checkpoints
         is_best = val_loss < best_metrics['val_loss']
         if is_best:
             best_metrics = metrics.copy()
@@ -270,12 +270,10 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
             metrics, is_best, wandb.run.id if use_wandb else None
         )
         
-        # Early stopping
         if early_stopper.should_stop(val_loss):
             print(f"Early stopping triggered at epoch {epoch + 1}")
             break
     
-    # Finalize W&B run
     if use_wandb:
         wandb.summary.update(best_metrics)
         if os.path.exists(checkpoint_path):
