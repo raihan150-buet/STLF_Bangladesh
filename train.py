@@ -173,7 +173,7 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
     # Load configuration
     with open(config_file) as f:
         config = yaml.safe_load(f)
-        
+
     config['data_path'] = data_path
     config['checkpoint_dir'] = checkpoint_dir
     config['saved_models_dir'] = saved_models_dir
@@ -215,8 +215,17 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         optimizer = optim.Adam(model.parameters(), lr=config.get("learning_rate", 0.001))
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         
-        scheduler = ReduceLROnPlateau(optimizer, **config.get('scheduler_config', {}))
-        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        scheduler_params = checkpoint['config'].get('scheduler_config', {})
+        if scheduler_params.pop('use_scheduler', False): # .pop() checks and removes the key
+            scheduler = ReduceLROnPlateau(optimizer, **scheduler_params)
+            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        else:
+            # Create a dummy scheduler if it wasn't used in the original run
+            scheduler = type('DummyScheduler', (), {
+                'step': lambda *args: None,
+                'state_dict': lambda: None,
+                'load_state_dict': lambda *args: None
+            })()
         
         start_epoch = checkpoint['epoch'] + 1
         best_metrics = checkpoint.get('metrics', {'val_loss': float('inf')})
