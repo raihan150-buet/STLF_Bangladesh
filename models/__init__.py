@@ -17,6 +17,7 @@ from .qdi_lstm import QDILSTMModel
 from .classical_qdi_benchmark import ClassicalQDIBenchmarkModel
 from .qres_lstm import QResLSTM
 from .classical_res_lstm import ClassicalResLSTM
+from .qultsf import QuLTSF
 
 
 # A dictionary mapping the model_type string from your config to the actual model class.
@@ -41,6 +42,9 @@ MODEL_REGISTRY = {
     "classical_enhanced_lstm": ClassicalEnhancedLSTMModel,
     "classical_qdi_benchmark": ClassicalQDIBenchmarkModel,
     "classical_res_lstm": ClassicalResLSTM,
+
+    #QuLTSF
+    "qultsf": QuLTSF,
 }
 
 def get_model(model_type: str, config: dict) -> BaseModel:
