@@ -4,7 +4,7 @@ from .base_model import BaseModel
 from .lstm import LSTMModel
 from .tcn import TCNModel
 from .cnn_lstm import CNN_LSTM_Model
-from .transformer_model import TransformerModel
+from .transformer import TransformerModel
 
 # --- Import Quantum-Inspired and SOTA Classical Models ---
 from .quantum_inspired_lstm import QuantumInspiredLSTM
@@ -13,12 +13,11 @@ from .classical_conv_lstm import ClassicalConvLSTM
 # --- Import Hybrid Quantum & Benchmark Models ---
 from .q_e_lstm import QEnhancedLSTMModel
 from .classical_enhanced_lstm import ClassicalEnhancedLSTMModel
-from .qdi_lstm import QDILSTMModel
-from .classical_qdi_benchmark import ClassicalQDIBenchmarkModel
+from .qdi_lstm import QDILSTM
+from .classical_qdi import ClassicalQDI
 from .qres_lstm import QResLSTM
 from .classical_res_lstm import ClassicalResLSTM
 from .qultsf import QuLTSF
-
 
 # A dictionary mapping the model_type string from your config to the actual model class.
 
@@ -35,16 +34,15 @@ MODEL_REGISTRY = {
     
     # Hybrid Quantum Models
     "qenhancedlstm": QEnhancedLSTMModel,
-    "qdi_lstm": QDILSTMModel,
+    "qdi_lstm": QDILSTM,
     "qres_lstm": QResLSTM,
+    "qultsf": QuLTSF,
     
     # Corresponding Classical Benchmarks
     "classical_enhanced_lstm": ClassicalEnhancedLSTMModel,
-    "classical_qdi_benchmark": ClassicalQDIBenchmarkModel,
+    "classical_qdi_benchmark": ClassicalQDI,
     "classical_res_lstm": ClassicalResLSTM,
 
-    #QuLTSF
-    "qultsf": QuLTSF,
 }
 
 def get_model(model_type: str, config: dict) -> BaseModel:
