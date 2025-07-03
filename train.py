@@ -184,7 +184,7 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
     
     use_wandb = initialize_wandb(config, wandb_run_id)
     if use_wandb:
-        config = wandb.config
+        config.update(wandb.config)
     
     data = load_and_preprocess_data(config)
     train_loader = DataLoader(
