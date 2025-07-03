@@ -56,8 +56,8 @@ class MultiScaleModel(BaseModel):
 
     def forward(self, x):
         # x shape: [batch_size, sequence_length, num_features]
-        # The input `x` has the longest sequence length (for the LSTM).
-
+        device = next(self.parameters()).device
+        x = x.to(device)
         # Process short-term branch
         x_cnn = x[:, -self.cnn_seq_len:, :]
         x_cnn = x_cnn.permute(0, 2, 1)  # Conv1d expects [batch, channels, length]
