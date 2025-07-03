@@ -1,8 +1,8 @@
 project: "demand_forecasting"
 experiment_name: "MultiScale_CNN_GRU_LSTM"
 target_column: "Demand(MW)"
-forecasting_type: "multivariate"
-features: [] 
+forecasting_type: "univariate"
+features: []
 
 # IMPORTANT: This must be the longest sequence length used by any branch.
 sequence_length: 336 # longest sequence length
@@ -24,14 +24,15 @@ cnn_params:
   out_channels: 64
   kernel_size: 3
 gru_params:
-  hidden_size: 100
-  num_layers: 1
+  hidden_size: 128
+  num_layers: 2
 lstm_params:
-  hidden_size: 100
-  num_layers: 1
+  hidden_size: 256
+  num_layers: 3
 
 # Parameters for the final fusion layer
 fusion_params:
+  fusion_dim: 128 
   hidden_size: 128
   dropout: 0.2
 
@@ -48,6 +49,7 @@ batch_size: 32
 learning_rate: 0.0005
 num_epochs: 50
 patience: 10
+checkpoint_freq: 5
 
 # Scheduler Configuration
 scheduler_config:
@@ -58,5 +60,5 @@ scheduler_config:
 
 # --- W&B Configuration ---
 use_wandb: True
-wandb_project: "MultiScale_Forecasting"
+wandb_project: "MultiScale_Forecasting_Attention"
 wandb_entity: null
