@@ -17,7 +17,9 @@ from .qdi_lstm import QDILSTM
 from .classical_qdi import ClassicalQDI
 from .qres_lstm import QResLSTM
 from .classical_res_lstm import ClassicalResLSTM
-from .qultsf import QuLTSF
+
+#------------Novel Classical Model------------
+from .multi_scale_model import MultiScaleModel
 
 # A dictionary mapping the model_type string from your config to the actual model class.
 
@@ -36,12 +38,14 @@ MODEL_REGISTRY = {
     "qenhancedlstm": QEnhancedLSTMModel,
     "qdi_lstm": QDILSTM,
     "qres_lstm": QResLSTM,
-    "qultsf": QuLTSF,
     
     # Corresponding Classical Benchmarks
     "classical_enhanced_lstm": ClassicalEnhancedLSTMModel,
     "classical_qdi_benchmark": ClassicalQDI,
     "classical_res_lstm": ClassicalResLSTM,
+
+    #Novel Classcial Models
+    "multi_scale": MultiScaleModel,
 
 }
 
