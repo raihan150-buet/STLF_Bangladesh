@@ -37,11 +37,11 @@ class TrainingLogger:
 
 def create_filename(config: Dict, epoch: Optional[int] = None, 
                     is_best: bool = False, run_id: Optional[str] = None) -> str:
+    """Generate standardized filenames for checkpoints."""
     model_name = config.get("model_type", "model")
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    
     if is_best:
-        return f"best_{model_name}_{run_id or timestamp}.pth"
+        return f"best_{model_name}.pth"
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     return f"checkpoint_{model_name}_epoch{epoch}_{run_id or timestamp}.pth"
 
 class CheckpointManager:
@@ -54,20 +54,23 @@ class CheckpointManager:
     def save(self, epoch: int, model: nn.Module, optimizer: optim.Optimizer, 
              scheduler, config: Dict, metrics: Dict, is_best: bool = False, 
              run_id: Optional[str] = None) -> str:
+        """Save model checkpoint with all training state."""
         save_dir = self.saved_models_dir if is_best else self.checkpoint_dir
         filename = create_filename(config, epoch, is_best, run_id)
         path = os.path.join(save_dir, filename)
+        save_config = dict(config)
         
         torch.save({
             'epoch': epoch,
             'model_state_dict': model.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'scheduler_state_dict': scheduler.state_dict(),
-            'config': config,
+            'config': save_config,  # Use the converted dictionary
             'metrics': metrics,
             'wandb_run_id': run_id
         }, path)
         
+        print(f"Saved checkpoint to {path}") # Added for better feedback
         return path
     
     @staticmethod
@@ -234,11 +237,14 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         start_epoch = 0
         best_metrics = {'val_loss': float('inf')}
     
-    criterion = nn.MSELoss()
+        criterion = nn.MSELoss()
     checkpoint_manager = CheckpointManager(checkpoint_dir, saved_models_dir)
     early_stopper = EarlyStopper(patience=config.get("patience", 10))
     logger = TrainingLogger(use_wandb)
     
+    checkpoint_freq = config.get("checkpoint_freq", 1) 
+    
+    # Main training loop
     for epoch in range(start_epoch, config.get("num_epochs", 50)):
         train_loss = train_epoch(
             model, train_loader, optimizer, criterion, device,
@@ -257,14 +263,20 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         logger.log(metrics)
         
         is_best = val_loss < best_metrics['val_loss']
+
+        # Always save the model if it's the best one so far
         if is_best:
             best_metrics = metrics.copy()
-            
-        checkpoint_path = checkpoint_manager.save(
-            epoch, model, optimizer, scheduler, config,
-            metrics, is_best, wandb.run.id if use_wandb else None
-        )
-        
+            checkpoint_manager.save(
+                epoch, model, optimizer, scheduler, dict(config),
+                metrics, is_best=True, run_id=wandb.run.id if use_wandb else None
+            )
+        elif (epoch + 1) % checkpoint_freq == 0:
+            checkpoint_manager.save(
+                epoch, model, optimizer, scheduler, dict(config),
+                metrics, is_best=False, run_id=wandb.run.id if use_wandb else None
+            )
+
         if early_stopper.should_stop(val_loss):
             print(f"Early stopping triggered at epoch {epoch + 1}")
             break
