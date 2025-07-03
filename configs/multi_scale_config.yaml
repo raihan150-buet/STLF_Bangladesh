@@ -1,0 +1,62 @@
+project: "demand_forecasting"
+experiment_name: "MultiScale_CNN_GRU_LSTM"
+target_column: "Demand(MW)"
+forecasting_type: "multivariate"
+features: [] 
+
+# IMPORTANT: This must be the longest sequence length used by any branch.
+sequence_length: 336 # longest sequence length
+
+forecast_horizon: 24
+test_size: 0.2
+val_size: 0.2
+
+# --- Model Configuration ---
+model_type: "multi_scale"
+
+# Define sequence lengths for each parallel branch
+cnn_seq_len: 24      # Look at the last day
+gru_seq_len: 168     # Look at the last week
+lstm_seq_len: 336    # Look at the last 2 weeks
+
+# Parameters for each branch
+cnn_params:
+  out_channels: 64
+  kernel_size: 3
+gru_params:
+  hidden_size: 100
+  num_layers: 1
+lstm_params:
+  hidden_size: 100
+  num_layers: 1
+
+# Parameters for the final fusion layer
+fusion_params:
+  hidden_size: 128
+  dropout: 0.2
+
+# --- Feature Engineering ---
+
+feature_engineering:
+  use_time_features: false
+  use_cyclical_encoding: false
+  use_lag_features: false
+  use_rolling_window_features: false
+
+# --- Training Configuration ---
+batch_size: 32
+learning_rate: 0.0005
+num_epochs: 50
+patience: 10
+
+# Scheduler Configuration
+scheduler_config:
+  use_scheduler: True
+  mode: 'min'
+  factor: 0.5
+  patience: 5
+
+# --- W&B Configuration ---
+use_wandb: True
+wandb_project: "MultiScale_Forecasting"
+wandb_entity: null

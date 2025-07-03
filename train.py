@@ -24,12 +24,10 @@ def get_default_device():
         return torch.device("cpu")
 
 class TrainingLogger:
-    """Handles logging to both console and W&B with consistent formatting."""
     def __init__(self, use_wandb: bool = False):
         self.use_wandb = use_wandb
         
     def log(self, metrics: Dict, step: Optional[int] = None):
-        """Log metrics to both console and W&B."""
         log_str = " | ".join(f"{k}: {v:.6f}" if isinstance(v, float) else f"{k}: {v}" 
                              for k, v in metrics.items())
         print(log_str)
@@ -39,7 +37,6 @@ class TrainingLogger:
 
 def create_filename(config: Dict, epoch: Optional[int] = None, 
                     is_best: bool = False, run_id: Optional[str] = None) -> str:
-    """Generate standardized filenames for checkpoints."""
     model_name = config.get("model_type", "model")
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     
@@ -48,7 +45,6 @@ def create_filename(config: Dict, epoch: Optional[int] = None,
     return f"checkpoint_{model_name}_epoch{epoch}_{run_id or timestamp}.pth"
 
 class CheckpointManager:
-    """Handles saving and loading model checkpoints with full state preservation."""
     def __init__(self, checkpoint_dir: str, saved_models_dir: str):
         os.makedirs(checkpoint_dir, exist_ok=True)
         os.makedirs(saved_models_dir, exist_ok=True)
@@ -58,7 +54,6 @@ class CheckpointManager:
     def save(self, epoch: int, model: nn.Module, optimizer: optim.Optimizer, 
              scheduler, config: Dict, metrics: Dict, is_best: bool = False, 
              run_id: Optional[str] = None) -> str:
-        """Save model checkpoint with all training state."""
         save_dir = self.saved_models_dir if is_best else self.checkpoint_dir
         filename = create_filename(config, epoch, is_best, run_id)
         path = os.path.join(save_dir, filename)
@@ -77,7 +72,6 @@ class CheckpointManager:
     
     @staticmethod
     def load(path: str, device: torch.device) -> Dict:
-        """Load checkpoint and map to specified device."""
         if not os.path.exists(path):
             raise FileNotFoundError(f"Checkpoint not found: {path}")
             
@@ -89,7 +83,6 @@ class CheckpointManager:
         return checkpoint
 
 class EarlyStopper:
-    """Handles early stopping based on validation metrics."""
     def __init__(self, patience: int = 10, min_delta: float = 0.0):
         self.patience = patience
         self.min_delta = min_delta
@@ -106,18 +99,22 @@ class EarlyStopper:
         return self.counter >= self.patience
 
 def initialize_wandb(config: Dict, run_id: Optional[str] = None) -> bool:
-    """Initialize W&B logging with optional run resuming."""
     if not config.get("use_wandb", False):
         return False
         
     try:
+        model_name = config.get("model_type", "model")
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        run_name = f"{model_name}_{timestamp}"
+
         wandb.init(
             project=config.get("wandb_project"),
             entity=config.get("wandb_entity"),
             config=config,
             id=run_id,
             resume="allow" if run_id else None,
-            reinit=True
+            reinit=True,
+            name=run_name
         )
         print(f"W&B Run: {wandb.run.name} (ID: {wandb.run.id})")
         return True
@@ -128,16 +125,15 @@ def initialize_wandb(config: Dict, run_id: Optional[str] = None) -> bool:
 def train_epoch(model: nn.Module, dataloader: DataLoader, 
                 optimizer: optim.Optimizer, criterion: nn.Module, 
                 device: torch.device, clip_grad: Optional[float] = None) -> float:
-    """Train model for one epoch."""
     model.train()
     total_loss = 0.0
     
     pbar = tqdm(dataloader, desc="Training", leave=False)
     for X_batch, y_batch in pbar:
-        X_batch, y_batch = X_batch.to(device), y_batch.to(device)
-        
-        optimizer.zero_grad()
+        print(f"X_batch shape: {X_batch.shape}")  # Should be [batch_size, seq_len, features]
+        print(f"y_batch shape: {y_batch.shape}")  # Should be [batch_size, forecast_horizon]
         outputs = model(X_batch)
+        print(f"Outputs shape: {outputs.shape}")  # Should match y_batch.shape
         loss = criterion(outputs, y_batch)
         loss.backward()
         
@@ -153,7 +149,6 @@ def train_epoch(model: nn.Module, dataloader: DataLoader,
 
 def validate(model: nn.Module, dataloader: DataLoader, 
              criterion: nn.Module, device: torch.device) -> float:
-    """Validate model performance."""
     model.eval()
     total_loss = 0.0
     
@@ -168,7 +163,6 @@ def validate(model: nn.Module, dataloader: DataLoader,
 
 def train(config_file: str, data_path: str, checkpoint_dir: str, 
           saved_models_dir: str, resume_from: Optional[str] = None):
-    """Main training procedure with full training lifecycle management."""
     with open(config_file) as f:
         config = yaml.safe_load(f)
     
@@ -276,7 +270,7 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
     
     if use_wandb:
         wandb.summary.update(best_metrics)
-        if os.path.exists(checkpoint_path):
+        if 'checkpoint_path' in locals() and os.path.exists(checkpoint_path):
             artifact = wandb.Artifact(
                 name=f"model-{wandb.run.id}",
                 type="model",
