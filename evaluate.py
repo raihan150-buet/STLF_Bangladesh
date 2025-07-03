@@ -61,6 +61,11 @@ def evaluate(config_path, model_checkpoint_path, data_path):
     final_preds_scaled = np.concatenate(all_preds_scaled)
     final_actuals_scaled = np.concatenate(all_actuals_scaled)
 
+    if final_preds_scaled.ndim == 1:
+        final_preds_scaled = final_preds_scaled.reshape(-1, 1)
+    if final_actuals_scaled.ndim == 1:
+        final_actuals_scaled = final_actuals_scaled.reshape(-1, 1)
+
     final_preds_unscaled = target_scaler.inverse_transform(final_preds_scaled)
     final_actuals_unscaled = target_scaler.inverse_transform(final_actuals_scaled)
     
