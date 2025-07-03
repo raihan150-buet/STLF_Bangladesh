@@ -55,28 +55,33 @@ class MultiScaleModel(BaseModel):
         )
 
     def forward(self, x):
-        # x shape: [batch_size, sequence_length, num_features]
+        # Ensure the input tensor is on the correct device
         device = next(self.parameters()).device
         x = x.to(device)
-        # Process short-term branch
+
+        # Slice input for each branch
         x_cnn = x[:, -self.cnn_seq_len:, :]
-        x_cnn = x_cnn.permute(0, 2, 1)  # Conv1d expects [batch, channels, length]
-        cnn_out = self.cnn_branch(x_cnn)
-
-        # Process medium-term branch
         x_gru = x[:, -self.gru_seq_len:, :]
-        _, gru_out = self.gru_branch(x_gru) # We only need the final hidden state
-        gru_out = gru_out.squeeze(0)
+        x_lstm = x
+        
+        # CNN Branch (already produces 2D output)
+        cnn_out = self.cnn_branch(x_cnn.permute(0, 2, 1))
 
-        # Process long-term branch
-        x_lstm = x # The full sequence length
-        _, (lstm_out, _) = self.lstm_branch(x_lstm) # We only need the final hidden state
-        lstm_out = lstm_out.squeeze(0)
+        # GRU Branch
+        _, gru_hidden_state = self.gru_branch(x_gru)
+        gru_out = gru_hidden_state[-1, :, :]
 
-        # Concatenate the outputs from all branches for decision fusion
+        # LSTM Branch
+        _, (lstm_hidden_state, _) = self.lstm_branch(x_lstm)
+        lstm_out = lstm_hidden_state[-1, :, :]
+
+        # --- Concatenate the 2D outputs from all branches ---
         combined_out = torch.cat((cnn_out, gru_out, lstm_out), dim=1)
 
         # Final prediction from the fusion layer
         final_prediction = self.fusion_layer(combined_out)
 
-        return final_prediction
+        # Squeeze to match target shape
+        return final_prediction.squeeze(-1)
+
+        
