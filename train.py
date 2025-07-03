@@ -130,18 +130,11 @@ def train_epoch(model: nn.Module, dataloader: DataLoader,
     
     pbar = tqdm(dataloader, desc="Training", leave=False)
     for X_batch, y_batch in pbar:
-        
+
         X_batch = X_batch.to(device)
         y_batch = y_batch.to(device)
-
-        print(f"X_batch shape: {X_batch.shape}")
-        print(f"y_batch shape: {y_batch.shape}")
-        
-        # Standard practice: zero gradients before the forward pass
         optimizer.zero_grad()
-        
         outputs = model(X_batch)
-        print(f"Outputs shape: {outputs.shape}")
         loss = criterion(outputs, y_batch)
         loss.backward()
         
