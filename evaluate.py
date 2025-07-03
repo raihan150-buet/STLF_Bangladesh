@@ -45,7 +45,7 @@ def evaluate(config_path, model_checkpoint_path, data_path):
     if not os.path.exists(model_checkpoint_path):
         raise FileNotFoundError(f"Model checkpoint not found at {model_checkpoint_path}")
     
-    checkpoint = torch.load(model_checkpoint_path, map_location=device)
+    checkpoint = torch.load(model_checkpoint_path, map_location=device, weights_only=False)
     model_config = checkpoint['config']
     model = get_model(model_config["model_type"], model_config).to(device)
     model.load_state_dict(checkpoint['model_state_dict'])
