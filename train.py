@@ -237,7 +237,7 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         start_epoch = 0
         best_metrics = {'val_loss': float('inf')}
     
-        criterion = nn.MSELoss()
+    criterion = nn.MSELoss()
     checkpoint_manager = CheckpointManager(checkpoint_dir, saved_models_dir)
     early_stopper = EarlyStopper(patience=config.get("patience", 10))
     logger = TrainingLogger(use_wandb)
