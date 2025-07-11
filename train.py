@@ -204,7 +204,7 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         model.load_state_dict(checkpoint['model_state_dict'])
         model = model.to(device)
         
-        optimizer = optim.Adam(model.parameters(), lr=config.get("learning_rate", 0.001))
+        optimizer = optim.Adam(model.parameters())
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         
         scheduler_params = checkpoint['config'].get('scheduler_config', {})
