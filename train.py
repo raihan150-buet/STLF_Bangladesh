@@ -214,7 +214,7 @@ def train(config_file: str, data_path: str, checkpoint_dir: str,
         else:
             scheduler = type('DummyScheduler', (), {
                 'step': lambda *args: None,
-                'state_dict': lambda: None,
+                'state_dict': lambda *args: None,
                 'load_state_dict': lambda *args: None
             })()
         
